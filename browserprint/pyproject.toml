@@ -21,6 +21,8 @@ test_sources = [
 ]
 
 requires = [
+    "fastapi",
+    "uvicorn",
 ]
 test_requires = [
     "pytest",
