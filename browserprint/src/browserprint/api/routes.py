@@ -30,7 +30,7 @@ _SUMATRA_PDF_PATH = (
 
 class PrintRequest(BaseModel):
     pdfUrl: str = Field(min_length=1)
-    printerCommand: str = Field(min_length=1)
+    printCommand: str = Field(min_length=1)
 
     @field_validator("pdfUrl")
     @classmethod
@@ -41,6 +41,10 @@ class PrintRequest(BaseModel):
         return value.strip()
 
 
+class PrintJobsRequest(BaseModel):
+    jobs: list[PrintRequest] = Field(min_length=1)
+
+
 @router.get("/")
 def root() -> dict[str, str]:
     return {"message": "hello world"}
@@ -48,6 +52,11 @@ def root() -> dict[str, str]:
 
 @router.options("/print")
 def options_print() -> dict:
+    return {}
+
+
+@router.options("/print/jobs")
+def options_print_jobs() -> dict:
     return {}
 
 
@@ -72,7 +81,7 @@ def print_document(
         _run_download_task,
         request_id=request_id,
         pdf_url=request.pdfUrl,
-        printer_command=request.printerCommand,
+        printer_command=request.printCommand,
     )
 
     return {
@@ -82,7 +91,64 @@ def print_document(
     }
 
 
+@router.post("/print/jobs", status_code=202)
+def print_document_jobs(
+    request: PrintJobsRequest,
+    background_tasks: BackgroundTasks,
+) -> dict[str, str]:
+    if not _try_acquire_download_slot():
+        raise HTTPException(
+            status_code=503,
+            detail="Download queue is full. Please retry shortly.",
+        )
+
+    request_id = uuid4().hex
+    logger.info(
+        "download_jobs_request_accepted request_id=%s jobs_count=%s",
+        request_id,
+        len(request.jobs),
+    )
+    background_tasks.add_task(
+        _run_download_jobs_task,
+        request_id=request_id,
+        jobs=request.jobs,
+    )
+
+    return {
+        "status": "accepted",
+        "requestId": request_id,
+        "acceptedJobs": str(len(request.jobs)),
+        "message": "Jobs validated and queued for background download.",
+    }
+
+
 def _run_download_task(request_id: str, pdf_url: str, printer_command: str) -> None:
+    try:
+        _run_single_download_job(
+            request_id=request_id,
+            pdf_url=pdf_url,
+            printer_command=printer_command,
+        )
+    finally:
+        _DOWNLOAD_SEMAPHORE.release()
+
+
+def _run_download_jobs_task(request_id: str, jobs: list[PrintRequest]) -> None:
+    try:
+        for index, job in enumerate(jobs, start=1):
+            job_request_id = f"{request_id}-{index}"
+            _run_single_download_job(
+                request_id=job_request_id,
+                pdf_url=job.pdfUrl,
+                printer_command=job.printCommand,
+            )
+    finally:
+        _DOWNLOAD_SEMAPHORE.release()
+
+
+def _run_single_download_job(
+    request_id: str, pdf_url: str, printer_command: str
+) -> None:
     try:
         _DEBUG_OUTPUT_DIR.mkdir(exist_ok=True)
         output_path = _resolve_output_path(pdf_url)
@@ -101,8 +167,6 @@ def _run_download_task(request_id: str, pdf_url: str, printer_command: str) -> N
         logger.error("download_save_failed request_id=%s reason=%s", request_id, exc)
     except Exception:
         logger.exception("download_unexpected_failure request_id=%s", request_id)
-    finally:
-        _DOWNLOAD_SEMAPHORE.release()
 
 
 def _try_acquire_download_slot() -> bool:

@@ -14,7 +14,7 @@ def _parse_printer_command(printer_command: str) -> list[str]:
     tokens = shlex.split(printer_command, posix=(os.name != "nt"))
     tokens = [token.strip().strip('"').strip("'") for token in tokens]
     if not tokens:
-        raise PrintExecutionError("printerCommand cannot be empty")
+        raise PrintExecutionError("printCommand cannot be empty")
     if tokens[-1].lower().endswith(".pdf"):
         tokens = tokens[:-1]
     return tokens
