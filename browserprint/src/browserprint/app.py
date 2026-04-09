@@ -12,6 +12,7 @@ from browserprint.api.server import run_local_server
 from browserprint.ui.auth_settings import AuthSettingsController
 from browserprint.ui.log_panel import LogPanel
 from browserprint.ui.logging import install_app_log_handler
+from browserprint.ui.make_request import MakeRequestController
 
 
 class BrowserPrint(toga.App):
@@ -29,6 +30,10 @@ class BrowserPrint(toga.App):
         main_box.add(self.log_panel.widget)
 
         self.auth_controller = AuthSettingsController(
+            app=self,
+            log_line=self.log_panel.append_line,
+        )
+        self.make_request_controller = MakeRequestController(
             app=self,
             log_line=self.log_panel.append_line,
         )
@@ -60,9 +65,19 @@ class BrowserPrint(toga.App):
                 tooltip="Configure eDiary auth settings and token actions",
             )
         )
+        self.commands.add(
+            toga.Command(
+                self._open_make_request,
+                text="Make Request",
+                tooltip="Send custom authenticated requests for endpoint testing",
+            )
+        )
 
     def _open_auth_settings(self, widget=None) -> None:
         self.auth_controller.open(widget)
+
+    def _open_make_request(self, widget=None) -> None:
+        self.make_request_controller.open(widget)
 
     def _emit_log_line(self, line: str) -> None:
         self.loop.call_soon_threadsafe(self.log_panel.append_line, line)
