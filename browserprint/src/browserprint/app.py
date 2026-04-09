@@ -9,6 +9,7 @@ from toga.constants import COLUMN
 from toga.style import Pack
 
 from browserprint.api.server import run_local_server
+from browserprint.ui.auth_settings import AuthSettingsController
 from browserprint.ui.log_panel import LogPanel
 from browserprint.ui.logging import install_app_log_handler
 
@@ -27,8 +28,16 @@ class BrowserPrint(toga.App):
         self.log_panel = LogPanel()
         main_box.add(self.log_panel.widget)
 
+        self.auth_controller = AuthSettingsController(
+            app=self,
+            log_line=self.log_panel.append_line,
+        )
+
         install_app_log_handler(self._emit_log_line)
         self.log_panel.append_line("Starting BrowserPrint...")
+
+        self._install_toolbar_commands()
+        self.log_panel.append_line(self.auth_controller.describe_token_state())
 
         # Run the local API server without blocking the UI event loop.
         self.api_thread = threading.Thread(
@@ -42,6 +51,18 @@ class BrowserPrint(toga.App):
         self.main_window = toga.MainWindow(title=self.formal_name)
         self.main_window.content = main_box
         self.main_window.show()
+
+    def _install_toolbar_commands(self) -> None:
+        self.commands.add(
+            toga.Command(
+                self._open_auth_settings,
+                text="Generate Bearer Token",
+                tooltip="Configure eDiary auth settings and token actions",
+            )
+        )
+
+    def _open_auth_settings(self, widget=None) -> None:
+        self.auth_controller.open(widget)
 
     def _emit_log_line(self, line: str) -> None:
         self.loop.call_soon_threadsafe(self.log_panel.append_line, line)
