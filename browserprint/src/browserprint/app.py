@@ -2,7 +2,6 @@
 Manage requests from browser to printer without dialog boxes
 """
 
-import logging
 import threading
 
 import toga
@@ -10,26 +9,11 @@ from toga.constants import COLUMN
 from toga.style import Pack
 
 from browserprint.api.server import run_local_server
-
-
-class _TogaTextLogHandler(logging.Handler):
-    """Forward Python log records to the app's on-screen log panel."""
-
-    def __init__(self, app: "BrowserPrint") -> None:
-        super().__init__()
-        self.app = app
-
-    def emit(self, record: logging.LogRecord) -> None:
-        message = self.format(record)
-        try:
-            self.app.loop.call_soon_threadsafe(self.app.append_log_line, message)
-        except Exception:
-            return
+from browserprint.ui.log_panel import LogPanel
+from browserprint.ui.logging import install_app_log_handler
 
 
 class BrowserPrint(toga.App):
-    _MAX_LOG_LINES = 400
-
     def startup(self):
         """Construct and show the Toga application.
 
@@ -40,14 +24,11 @@ class BrowserPrint(toga.App):
         main_box = toga.Box(style=Pack(direction=COLUMN, padding=10, flex=1))
         main_box.add(toga.Label("Application logs", style=Pack(padding_bottom=6)))
 
-        self.log_output = toga.MultilineTextInput(
-            readonly=True,
-            style=Pack(flex=1),
-        )
-        main_box.add(self.log_output)
+        self.log_panel = LogPanel()
+        main_box.add(self.log_panel.widget)
 
-        self._install_log_handler()
-        self.append_log_line("Starting BrowserPrint...")
+        install_app_log_handler(self._emit_log_line)
+        self.log_panel.append_line("Starting BrowserPrint...")
 
         # Run the local API server without blocking the UI event loop.
         self.api_thread = threading.Thread(
@@ -62,24 +43,8 @@ class BrowserPrint(toga.App):
         self.main_window.content = main_box
         self.main_window.show()
 
-    def append_log_line(self, line: str) -> None:
-        existing = self.log_output.value or ""
-        lines = existing.splitlines() if existing else []
-        lines.append(line)
-        self.log_output.value = "\n".join(lines[-self._MAX_LOG_LINES :])
-
-    def _install_log_handler(self) -> None:
-        handler = _TogaTextLogHandler(self)
-        handler.setFormatter(
-            logging.Formatter(
-                fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-                datefmt="%H:%M:%S",
-            )
-        )
-
-        logger = logging.getLogger("browserprint")
-        logger.setLevel(logging.INFO)
-        logger.addHandler(handler)
+    def _emit_log_line(self, line: str) -> None:
+        self.loop.call_soon_threadsafe(self.log_panel.append_line, line)
 
 
 def main():
