@@ -52,16 +52,18 @@ def test_print_downloads_and_saves_pdf(monkeypatch, tmp_path: Path) -> None:
         },
     )
 
-    assert response.status_code == 200
-    assert response.json()["status"] == "downloaded"
-    assert response.json()["filename"] == "invoice.pdf"
+    assert response.status_code == 202
+    assert response.json()["status"] == "accepted"
+    assert response.json()["requestId"]
     assert called["url"] == "http://localhost:8000/test/invoice"
     saved = tmp_path / "invoice.pdf"
     assert saved.exists()
     assert saved.read_bytes().startswith(b"%PDF")
 
 
-def test_print_returns_502_for_download_errors(monkeypatch, tmp_path: Path) -> None:
+def test_print_download_errors_do_not_fail_http_ack(
+    monkeypatch, tmp_path: Path
+) -> None:
     client = TestClient(create_app())
 
     def fake_fetch_pdf(url: str) -> bytes:
@@ -78,4 +80,26 @@ def test_print_returns_502_for_download_errors(monkeypatch, tmp_path: Path) -> N
         },
     )
 
-    assert response.status_code == 502
+    assert response.status_code == 202
+    assert response.json()["status"] == "accepted"
+
+
+def test_print_returns_503_when_download_queue_is_full() -> None:
+    client = TestClient(create_app())
+
+    from browserprint.api import routes
+
+    original = routes._try_acquire_download_slot
+    routes._try_acquire_download_slot = lambda: False
+    try:
+        response = client.post(
+            "/print",
+            json={
+                "pdfUrl": "http://localhost:8000/test.pdf",
+                "printerCommand": "MyPrinter",
+            },
+        )
+    finally:
+        routes._try_acquire_download_slot = original
+
+    assert response.status_code == 503
