@@ -22,9 +22,12 @@ test_sources = [
 
 requires = [
     "fastapi",
+    "python-dotenv",
+    "requests",
     "uvicorn",
 ]
 test_requires = [
+    "httpx",
     "pytest",
 ]
 

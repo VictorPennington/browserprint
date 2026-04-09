@@ -1,6 +1,7 @@
 """FastAPI server setup for local machine requests."""
 
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -18,12 +19,13 @@ _ALLOWED_ORIGINS = [
 
 
 def create_app() -> FastAPI:
+    load_dotenv()
     api = FastAPI(title="BrowserPrint Local API")
     api.add_middleware(
         CORSMiddleware,
         allow_origins=_ALLOWED_ORIGINS,
         allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Content-Type", "X-CSRF-TOKEN"],
+        allow_headers=["Content-Type", "Authorization", "X-CSRF-TOKEN"],
     )
     api.include_router(router)
     return api
