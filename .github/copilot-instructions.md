@@ -6,9 +6,13 @@ BrowserPrint is a local desktop companion app (BeeWare/Toga) that exposes a loca
 ## Current Functionality
 - Starts a local FastAPI server on `127.0.0.1:8003` when the desktop app launches.
 - Accepts CORS requests from localhost origins used by local web apps.
-- Provides `POST /print` to receive a Base64-encoded PDF payload.
+- Provides `POST /print` to receive a PDF URL endpoint, download the PDF, save it locally, and print it with SumatraPDF.
 - Saves received PDF files to a desktop debug folder (`~/Desktop/debug_pdfs`).
 - Calls SumatraPDF in silent print mode using the provided printer command.
+- Desktop UI includes command windows for:
+	- `Generate Bearer Token` (Sanctum token lifecycle actions)
+	- `Make Request` (custom authenticated endpoint testing)
+	- `Download PDF` (manual authenticated PDF download from endpoint/full URL)
 
 ## Current Scope
 - Optimized for local-machine printing workflows.

@@ -10,6 +10,7 @@ from toga.style import Pack
 
 from browserprint.api.server import run_local_server
 from browserprint.ui.auth_settings import AuthSettingsController
+from browserprint.ui.download_pdf import DownloadPdfController
 from browserprint.ui.log_panel import LogPanel
 from browserprint.ui.logging import install_app_log_handler
 from browserprint.ui.make_request import MakeRequestController
@@ -34,6 +35,10 @@ class BrowserPrint(toga.App):
             log_line=self.log_panel.append_line,
         )
         self.make_request_controller = MakeRequestController(
+            app=self,
+            log_line=self.log_panel.append_line,
+        )
+        self.download_pdf_controller = DownloadPdfController(
             app=self,
             log_line=self.log_panel.append_line,
         )
@@ -72,12 +77,22 @@ class BrowserPrint(toga.App):
                 tooltip="Send custom authenticated requests for endpoint testing",
             )
         )
+        self.commands.add(
+            toga.Command(
+                self._open_download_pdf,
+                text="Download PDF",
+                tooltip="Download a PDF from an authenticated endpoint",
+            )
+        )
 
     def _open_auth_settings(self, widget=None) -> None:
         self.auth_controller.open(widget)
 
     def _open_make_request(self, widget=None) -> None:
         self.make_request_controller.open(widget)
+
+    def _open_download_pdf(self, widget=None) -> None:
+        self.download_pdf_controller.open(widget)
 
     def _emit_log_line(self, line: str) -> None:
         self.loop.call_soon_threadsafe(self.log_panel.append_line, line)

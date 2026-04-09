@@ -18,15 +18,25 @@ def _get_required_bearer_token() -> str:
     return token
 
 
-def fetch_pdf(url: str) -> bytes:
+def _resolve_bearer_token(token: str | None) -> str:
+    if token is None:
+        return _get_required_bearer_token()
+
+    normalized = token.strip()
+    if not normalized:
+        raise PDFDownloadError("Missing bearer token for PDF request")
+    return normalized
+
+
+def fetch_pdf(url: str, token: str | None = None) -> bytes:
     """Download a PDF from URL using Sanctum bearer token from environment."""
     timeout_seconds = int(os.getenv("BROWSERPRINT_DOWNLOAD_TIMEOUT_SECONDS", "20"))
     max_pdf_bytes = int(os.getenv("BROWSERPRINT_MAX_PDF_BYTES", str(10 * 1024 * 1024)))
     auth_header = os.getenv("BROWSERPRINT_LARAVEL_AUTH_HEADER", "Authorization")
-    token = _get_required_bearer_token()
+    bearer_token = _resolve_bearer_token(token)
 
     headers = {
-        auth_header: f"Bearer {token}",
+        auth_header: f"Bearer {bearer_token}",
         "Accept": "application/pdf",
     }
 

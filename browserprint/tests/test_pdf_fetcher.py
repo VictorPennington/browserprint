@@ -61,6 +61,27 @@ def test_fetch_pdf_rejects_non_pdf(monkeypatch) -> None:
     assert "did not return a PDF" in str(exc_info.value)
 
 
+def test_fetch_pdf_accepts_explicit_token_without_env(monkeypatch) -> None:
+    monkeypatch.delenv("BROWSERPRINT_LARAVEL_TOKEN", raising=False)
+
+    captured = {}
+
+    def fake_get(url: str, headers: dict[str, str], timeout: int):
+        captured["headers"] = headers
+        return DummyResponse(
+            status_code=200,
+            headers={"content-type": "application/pdf"},
+            content=b"%PDF-fake",
+        )
+
+    monkeypatch.setattr("browserprint.api.pdf_fetcher.requests.get", fake_get)
+
+    payload = fetch_pdf("http://localhost:8000/doc.pdf", token="ui-token")
+
+    assert payload.startswith(b"%PDF")
+    assert captured["headers"]["Authorization"] == "Bearer ui-token"
+
+
 def test_fetch_pdf_handles_request_exception(monkeypatch) -> None:
     monkeypatch.setenv("BROWSERPRINT_LARAVEL_TOKEN", "abc123")
 
