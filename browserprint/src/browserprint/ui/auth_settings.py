@@ -69,7 +69,7 @@ class AuthSettingsController:
         self.replace_existing_switch = toga.Switch(
             text="Replace existing token",
             value=self.auth_config.replace_existing,
-            style=Pack(padding_top=4),
+            style=Pack(margin_top=4),
         )
 
         content.add(toga.Label("API Base URL"))
@@ -82,7 +82,7 @@ class AuthSettingsController:
         content.add(self.device_name_input)
         content.add(self.replace_existing_switch)
 
-        button_row = toga.Box(style=Pack(direction=ROW, padding_top=8, gap=8))
+        button_row = toga.Box(style=Pack(direction=ROW, margin_top=8, gap=8))
         self.save_settings_button = toga.Button(
             "Save Settings", on_press=self._save_auth_settings
         )
@@ -104,7 +104,7 @@ class AuthSettingsController:
         self.auth_status_output = toga.MultilineTextInput(
             readonly=True,
             value="Token state: unknown",
-            style=Pack(padding_top=6, height=84, flex=0),
+            style=Pack(margin_top=6, height=84, flex=0),
         )
         content.add(self.auth_status_output)
 

@@ -77,7 +77,7 @@ class MakeRequestController:
         )
         content.add(self.payload_input)
 
-        button_row = toga.Box(style=Pack(direction=ROW, padding_top=8, gap=8))
+        button_row = toga.Box(style=Pack(direction=ROW, margin_top=8, gap=8))
         self.send_button = toga.Button("Send", on_press=self._send_request)
         button_row.add(self.send_button)
         content.add(button_row)
@@ -85,7 +85,7 @@ class MakeRequestController:
         self.request_status_output = toga.MultilineTextInput(
             readonly=True,
             value="Ready to send a request.",
-            style=Pack(padding_top=6, height=120, flex=0),
+            style=Pack(margin_top=6, height=120, flex=0),
         )
         content.add(self.request_status_output)
 

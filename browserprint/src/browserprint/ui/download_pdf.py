@@ -66,7 +66,7 @@ class DownloadPdfController:
         )
         content.add(self.endpoint_input)
 
-        button_row = toga.Box(style=Pack(direction=ROW, padding_top=8, gap=8))
+        button_row = toga.Box(style=Pack(direction=ROW, margin_top=8, gap=8))
         self.download_button = toga.Button("Download", on_press=self._download_pdf)
         button_row.add(self.download_button)
         content.add(button_row)
@@ -74,7 +74,7 @@ class DownloadPdfController:
         self.download_status_output = toga.MultilineTextInput(
             readonly=True,
             value="Ready to download a PDF.",
-            style=Pack(padding_top=6, height=120, flex=0),
+            style=Pack(margin_top=6, height=120, flex=0),
         )
         content.add(self.download_status_output)
 
