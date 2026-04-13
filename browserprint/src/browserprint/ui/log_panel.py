@@ -11,11 +11,11 @@ class LogPanel:
         self._max_lines = max_lines
         self.widget = toga.MultilineTextInput(
             readonly=True,
-            style=Pack(flex=1),
+            style=Pack(height=240),
         )
 
     def append_line(self, line: str) -> None:
         existing = self.widget.value or ""
         lines = existing.splitlines() if existing else []
-        lines.append(line)
-        self.widget.value = "\n".join(lines[-self._max_lines :])
+        lines.insert(0, line)
+        self.widget.value = "\n".join(lines[: self._max_lines])
