@@ -21,14 +21,20 @@ class _TogaTextLogHandler(logging.Handler):
 
 def install_app_log_handler(emit_to_ui: Callable[[str], None]) -> None:
     """Attach a log handler that mirrors package logs into a UI callback."""
-    handler = _TogaTextLogHandler(emit_to_ui)
-    handler.setFormatter(
-        logging.Formatter(
-            fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-            datefmt="%H:%M:%S",
-        )
+    formatter = logging.Formatter(
+        fmt="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        datefmt="%H:%M:%S",
     )
+
+    # Handler for UI
+    ui_handler = _TogaTextLogHandler(emit_to_ui)
+    ui_handler.setFormatter(formatter)
+
+    # Handler for STDOUT
+    stdout_handler = logging.StreamHandler()
+    stdout_handler.setFormatter(formatter)
 
     logger = logging.getLogger("browserprint")
     logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
+    logger.addHandler(ui_handler)
+    logger.addHandler(stdout_handler)

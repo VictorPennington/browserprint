@@ -4,16 +4,25 @@ import os
 
 import requests
 
+from browserprint.auth_config import AuthConfigStore
+
 
 class PDFDownloadError(RuntimeError):
     """Raised when a PDF cannot be downloaded or validated."""
 
 
+_AUTH_STORE = AuthConfigStore()
+
+
 def _get_required_bearer_token() -> str:
+    stored_token = _AUTH_STORE.get_token()
+    if stored_token and stored_token.strip():
+        return stored_token.strip()
+
     token = os.getenv("BROWSERPRINT_LARAVEL_TOKEN", "").strip()
     if not token:
         raise PDFDownloadError(
-            "Missing Laravel bearer token. Configure BROWSERPRINT_LARAVEL_TOKEN in .env"
+            "Missing Laravel bearer token. Generate/store a token in the app or configure BROWSERPRINT_LARAVEL_TOKEN in .env"
         )
     return token
 

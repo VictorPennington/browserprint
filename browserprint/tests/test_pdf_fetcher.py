@@ -12,6 +12,10 @@ class DummyResponse:
 
 def test_fetch_pdf_requires_bearer_token(monkeypatch) -> None:
     monkeypatch.delenv("BROWSERPRINT_LARAVEL_TOKEN", raising=False)
+    monkeypatch.setattr(
+        "browserprint.api.pdf_fetcher._AUTH_STORE.get_token",
+        lambda: None,
+    )
 
     with pytest.raises(PDFDownloadError) as exc_info:
         fetch_pdf("http://localhost:8000/doc.pdf")
@@ -21,6 +25,10 @@ def test_fetch_pdf_requires_bearer_token(monkeypatch) -> None:
 
 def test_fetch_pdf_uses_bearer_token_header(monkeypatch) -> None:
     monkeypatch.setenv("BROWSERPRINT_LARAVEL_TOKEN", "abc123")
+    monkeypatch.setattr(
+        "browserprint.api.pdf_fetcher._AUTH_STORE.get_token",
+        lambda: None,
+    )
 
     captured = {}
 
@@ -45,6 +53,10 @@ def test_fetch_pdf_uses_bearer_token_header(monkeypatch) -> None:
 
 def test_fetch_pdf_rejects_non_pdf(monkeypatch) -> None:
     monkeypatch.setenv("BROWSERPRINT_LARAVEL_TOKEN", "abc123")
+    monkeypatch.setattr(
+        "browserprint.api.pdf_fetcher._AUTH_STORE.get_token",
+        lambda: None,
+    )
 
     def fake_get(url: str, headers: dict[str, str], timeout: int):
         return DummyResponse(
@@ -84,6 +96,10 @@ def test_fetch_pdf_accepts_explicit_token_without_env(monkeypatch) -> None:
 
 def test_fetch_pdf_handles_request_exception(monkeypatch) -> None:
     monkeypatch.setenv("BROWSERPRINT_LARAVEL_TOKEN", "abc123")
+    monkeypatch.setattr(
+        "browserprint.api.pdf_fetcher._AUTH_STORE.get_token",
+        lambda: None,
+    )
 
     def fake_get(url: str, headers: dict[str, str], timeout: int):
         raise requests.Timeout("timed out")
@@ -94,3 +110,28 @@ def test_fetch_pdf_handles_request_exception(monkeypatch) -> None:
         fetch_pdf("http://localhost:8000/doc.pdf")
 
     assert "Failed to fetch PDF" in str(exc_info.value)
+
+
+def test_fetch_pdf_prefers_stored_token_for_authorization_header(monkeypatch) -> None:
+    monkeypatch.setenv("BROWSERPRINT_LARAVEL_TOKEN", "env-token")
+    monkeypatch.setattr(
+        "browserprint.api.pdf_fetcher._AUTH_STORE.get_token",
+        lambda: "stored-token",
+    )
+
+    captured = {}
+
+    def fake_get(url: str, headers: dict[str, str], timeout: int):
+        captured["headers"] = headers
+        return DummyResponse(
+            status_code=200,
+            headers={"content-type": "application/pdf"},
+            content=b"%PDF-fake",
+        )
+
+    monkeypatch.setattr("browserprint.api.pdf_fetcher.requests.get", fake_get)
+
+    payload = fetch_pdf("http://localhost:8000/doc.pdf")
+
+    assert payload.startswith(b"%PDF")
+    assert captured["headers"]["Authorization"] == "Bearer stored-token"

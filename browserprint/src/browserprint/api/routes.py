@@ -1,14 +1,14 @@
 """Route definitions for the local FastAPI server."""
 
 import logging
-import os
+import queue
 import threading
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
 from uuid import uuid4
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel, Field, field_validator
 
 from .pdf_fetcher import PDFDownloadError, fetch_pdf
@@ -17,8 +17,27 @@ router = APIRouter()
 logger = logging.getLogger("browserprint.api.routes")
 
 _DEBUG_OUTPUT_DIR = Path.home() / "Desktop" / "debug_pdfs"
-_MAX_CONCURRENT_DOWNLOADS = int(os.getenv("BROWSERPRINT_MAX_CONCURRENT_DOWNLOADS", "8"))
-_DOWNLOAD_SEMAPHORE = threading.BoundedSemaphore(value=_MAX_CONCURRENT_DOWNLOADS)
+_DOWNLOAD_QUEUE: queue.Queue = queue.Queue()
+
+
+def _download_worker() -> None:
+    while True:
+        request_id, pdf_url, printer_command = _DOWNLOAD_QUEUE.get()
+        try:
+            _run_single_download_job(
+                request_id=request_id,
+                pdf_url=pdf_url,
+                printer_command=printer_command,
+            )
+        finally:
+            _DOWNLOAD_QUEUE.task_done()
+
+
+_download_worker_thread = threading.Thread(
+    target=_download_worker, daemon=True, name="download-worker"
+)
+_download_worker_thread.start()
+
 _SUMATRA_PDF_PATH = (
     Path(__file__).resolve().parents[1]
     / "resources"
@@ -50,39 +69,27 @@ def root() -> dict[str, str]:
     return {"message": "hello world"}
 
 
+#  ROUTER OPTIONS IS FOR HANDLING CORS
 @router.options("/print")
 def options_print() -> dict:
     return {}
 
 
+#  ROUTER OPTIONS IS FOR HANDLING CORS
 @router.options("/print/jobs")
 def options_print_jobs() -> dict:
     return {}
 
 
 @router.post("/print", status_code=202)
-def print_document(
-    request: PrintRequest,
-    background_tasks: BackgroundTasks,
-) -> dict[str, str]:
-    if not _try_acquire_download_slot():
-        raise HTTPException(
-            status_code=503,
-            detail="Download queue is full. Please retry shortly.",
-        )
-
+def print_document(request: PrintRequest) -> dict[str, str]:
     request_id = uuid4().hex
     logger.info(
         "download_request_accepted request_id=%s pdf_url=%s",
         request_id,
         request.pdfUrl,
     )
-    background_tasks.add_task(
-        _run_download_task,
-        request_id=request_id,
-        pdf_url=request.pdfUrl,
-        printer_command=request.printCommand,
-    )
+    _DOWNLOAD_QUEUE.put((request_id, request.pdfUrl, request.printCommand))
 
     return {
         "status": "accepted",
@@ -92,27 +99,16 @@ def print_document(
 
 
 @router.post("/print/jobs", status_code=202)
-def print_document_jobs(
-    request: PrintJobsRequest,
-    background_tasks: BackgroundTasks,
-) -> dict[str, str]:
-    if not _try_acquire_download_slot():
-        raise HTTPException(
-            status_code=503,
-            detail="Download queue is full. Please retry shortly.",
-        )
-
+def print_document_jobs(request: PrintJobsRequest) -> dict[str, str]:
     request_id = uuid4().hex
     logger.info(
         "download_jobs_request_accepted request_id=%s jobs_count=%s",
         request_id,
         len(request.jobs),
     )
-    background_tasks.add_task(
-        _run_download_jobs_task,
-        request_id=request_id,
-        jobs=request.jobs,
-    )
+    for index, job in enumerate(request.jobs, start=1):
+        job_request_id = f"{request_id}-{index}"
+        _DOWNLOAD_QUEUE.put((job_request_id, job.pdfUrl, job.printCommand))
 
     return {
         "status": "accepted",
@@ -120,30 +116,6 @@ def print_document_jobs(
         "acceptedJobs": str(len(request.jobs)),
         "message": "Jobs validated and queued for background download.",
     }
-
-
-def _run_download_task(request_id: str, pdf_url: str, printer_command: str) -> None:
-    try:
-        _run_single_download_job(
-            request_id=request_id,
-            pdf_url=pdf_url,
-            printer_command=printer_command,
-        )
-    finally:
-        _DOWNLOAD_SEMAPHORE.release()
-
-
-def _run_download_jobs_task(request_id: str, jobs: list[PrintRequest]) -> None:
-    try:
-        for index, job in enumerate(jobs, start=1):
-            job_request_id = f"{request_id}-{index}"
-            _run_single_download_job(
-                request_id=job_request_id,
-                pdf_url=job.pdfUrl,
-                printer_command=job.printCommand,
-            )
-    finally:
-        _DOWNLOAD_SEMAPHORE.release()
 
 
 def _run_single_download_job(
@@ -167,10 +139,6 @@ def _run_single_download_job(
         logger.error("download_save_failed request_id=%s reason=%s", request_id, exc)
     except Exception:
         logger.exception("download_unexpected_failure request_id=%s", request_id)
-
-
-def _try_acquire_download_slot() -> bool:
-    return _DOWNLOAD_SEMAPHORE.acquire(blocking=False)
 
 
 def _resolve_output_path(pdf_url: str) -> Path:

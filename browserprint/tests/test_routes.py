@@ -52,6 +52,10 @@ def test_print_downloads_and_saves_pdf(monkeypatch, tmp_path: Path) -> None:
         },
     )
 
+    from browserprint.api import routes as _routes
+
+    _routes._DOWNLOAD_QUEUE.join()
+
     assert response.status_code == 202
     assert response.json()["status"] == "accepted"
     assert response.json()["requestId"]
@@ -80,29 +84,12 @@ def test_print_download_errors_do_not_fail_http_ack(
         },
     )
 
+    from browserprint.api import routes as _routes
+
+    _routes._DOWNLOAD_QUEUE.join()
+
     assert response.status_code == 202
     assert response.json()["status"] == "accepted"
-
-
-def test_print_returns_503_when_download_queue_is_full() -> None:
-    client = TestClient(create_app())
-
-    from browserprint.api import routes
-
-    original = routes._try_acquire_download_slot
-    routes._try_acquire_download_slot = lambda: False
-    try:
-        response = client.post(
-            "/print",
-            json={
-                "pdfUrl": "http://localhost:8000/test.pdf",
-                "printCommand": "MyPrinter",
-            },
-        )
-    finally:
-        routes._try_acquire_download_slot = original
-
-    assert response.status_code == 503
 
 
 def test_print_jobs_requires_non_empty_jobs_array() -> None:
@@ -143,6 +130,10 @@ def test_print_jobs_downloads_and_saves_all_pdfs(monkeypatch, tmp_path: Path) ->
             ]
         },
     )
+
+    from browserprint.api import routes as _routes
+
+    _routes._DOWNLOAD_QUEUE.join()
 
     assert response.status_code == 202
     assert response.json()["status"] == "accepted"
