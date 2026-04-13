@@ -51,6 +51,13 @@ def _format_url_for_log(url: str) -> str:
     return path
 
 
+def _build_download_filename(pdf_url: str) -> str:
+    parsed = urlparse(pdf_url)
+    endpoint_name = Path(parsed.path).stem.strip() or "downloaded"
+    timestamp = datetime.now().strftime("%Y_%m_%d_%H%M")
+    return f"{timestamp}_{endpoint_name}.pdf"
+
+
 class PrintRequest(BaseModel):
     pdfUrl: str = Field(min_length=1)
     printCommand: str = Field(min_length=1)
@@ -144,16 +151,15 @@ def _run_single_download_job(
 
 
 def _resolve_output_path(pdf_url: str) -> Path:
-    parsed = urlparse(pdf_url)
-    candidate = Path(parsed.path).name.strip() or "downloaded.pdf"
-    if not candidate.lower().endswith(".pdf"):
-        candidate = f"{candidate}.pdf"
+    output_path = _DEBUG_OUTPUT_DIR / _build_download_filename(pdf_url)
+    if not output_path.exists():
+        return output_path
 
-    output_path = _DEBUG_OUTPUT_DIR / candidate
-    if output_path.exists():
-        stem = output_path.stem
-        suffix = output_path.suffix or ".pdf"
-        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-        output_path = _DEBUG_OUTPUT_DIR / f"{stem}-{timestamp}{suffix}"
-
-    return output_path
+    stem = output_path.stem
+    suffix = output_path.suffix or ".pdf"
+    counter = 2
+    while True:
+        candidate = _DEBUG_OUTPUT_DIR / f"{stem}_{counter}{suffix}"
+        if not candidate.exists():
+            return candidate
+        counter += 1

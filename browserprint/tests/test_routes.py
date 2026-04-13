@@ -1,8 +1,15 @@
+from datetime import datetime
 from pathlib import Path
 
 from browserprint.api.pdf_fetcher import PDFDownloadError
 from browserprint.api.server import create_app
 from fastapi.testclient import TestClient
+
+
+class FrozenDateTime:
+    @classmethod
+    def now(cls) -> datetime:
+        return datetime(2025, 12, 1, 12, 35)
 
 
 def test_print_requires_url_and_print_command() -> None:
@@ -43,6 +50,7 @@ def test_print_downloads_and_saves_pdf(monkeypatch, tmp_path: Path) -> None:
 
     monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -60,7 +68,7 @@ def test_print_downloads_and_saves_pdf(monkeypatch, tmp_path: Path) -> None:
     assert response.json()["status"] == "accepted"
     assert response.json()["requestId"]
     assert called["url"] == "http://localhost:8000/test/invoice"
-    saved = tmp_path / "invoice.pdf"
+    saved = tmp_path / "2025_12_01_1235_invoice.pdf"
     assert saved.exists()
     assert saved.read_bytes().startswith(b"%PDF")
 
@@ -75,6 +83,7 @@ def test_print_download_errors_do_not_fail_http_ack(
 
     monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -114,6 +123,7 @@ def test_print_jobs_downloads_and_saves_all_pdfs(monkeypatch, tmp_path: Path) ->
 
     monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
 
     response = client.post(
         "/print/jobs",
@@ -143,5 +153,21 @@ def test_print_jobs_downloads_and_saves_all_pdfs(monkeypatch, tmp_path: Path) ->
         "http://localhost:8000/test/invoice-a",
         "http://localhost:8000/test/invoice-b",
     ]
-    assert (tmp_path / "invoice-a.pdf").exists()
-    assert (tmp_path / "invoice-b.pdf").exists()
+    assert (tmp_path / "2025_12_01_1235_invoice-a.pdf").exists()
+    assert (tmp_path / "2025_12_01_1235_invoice-b.pdf").exists()
+
+
+def test_resolve_output_path_appends_counter_when_name_already_exists(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+
+    first_path = tmp_path / "2025_12_01_1235_invoice.pdf"
+    first_path.write_bytes(b"existing")
+
+    from browserprint.api.routes import _resolve_output_path
+
+    resolved = _resolve_output_path("http://localhost:8000/test/invoice")
+
+    assert resolved == tmp_path / "2025_12_01_1235_invoice_2.pdf"
