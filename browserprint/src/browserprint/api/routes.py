@@ -43,6 +43,14 @@ _download_worker_thread.start()
 _SUMATRA_PDF_PATH = SUMATRA_PATH
 
 
+def _format_url_for_log(url: str) -> str:
+    parsed = urlparse(url)
+    path = parsed.path or "/"
+    if parsed.query:
+        return f"{path}?{parsed.query}"
+    return path
+
+
 class PrintRequest(BaseModel):
     pdfUrl: str = Field(min_length=1)
     printCommand: str = Field(min_length=1)
@@ -81,16 +89,15 @@ def options_print_jobs() -> dict:
 def print_document(request: PrintRequest) -> dict[str, str]:
     request_id = uuid4().hex
     logger.info(
-        "download_request_accepted request_id=%s pdf_url=%s",
-        request_id,
-        request.pdfUrl,
+        "Request-> /print to: %s",
+        _format_url_for_log(request.pdfUrl),
     )
     _DOWNLOAD_QUEUE.put((request_id, request.pdfUrl, request.printCommand))
 
     return {
         "status": "accepted",
         "requestId": request_id,
-        "message": "Request validated and queued for background download.",
+        "message": "Request validated and queued.",
     }
 
 
@@ -98,7 +105,7 @@ def print_document(request: PrintRequest) -> dict[str, str]:
 def print_document_jobs(request: PrintJobsRequest) -> dict[str, str]:
     request_id = uuid4().hex
     logger.info(
-        "download_jobs_request_accepted request_id=%s jobs_count=%s",
+        "Request-> /print/jobs request_id=%s jobs_count=%s",
         request_id,
         len(request.jobs),
     )
@@ -120,13 +127,12 @@ def _run_single_download_job(
     try:
         _DEBUG_OUTPUT_DIR.mkdir(exist_ok=True)
         output_path = _resolve_output_path(pdf_url)
-        logger.info("download_started request_id=%s", request_id)
+        logger.info("download started for: \n     %s", _format_url_for_log(pdf_url))
         pdf_bytes = fetch_pdf(pdf_url)
         output_path.write_bytes(pdf_bytes)
         logger.info(
-            "download_saved request_id=%s filename=%s printer_command=%s",
-            request_id,
-            output_path.name,
+            "Download successful!\n     filename= %s \n     command= %s",
+            output_path,
             printer_command,
         )
     except PDFDownloadError as exc:

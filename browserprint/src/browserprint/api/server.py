@@ -31,7 +31,7 @@ def create_app() -> FastAPI:
         logger.info(
             "%s %s -> %s (%.1f ms)",
             request.method,
-            request.url.path,
+            request.url,
             response.status_code,
             elapsed_ms,
         )
