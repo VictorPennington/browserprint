@@ -17,6 +17,7 @@ Your job is to implement, debug, test, and refine Python code with repository-aw
 - Do not introduce new dependencies unless necessary and justified.
 - Do not leave changes unverified when local validation is possible.
 - Do not modify unrelated files.
+- Update `.github/copilot-instructions.md` whenever new features or architectural changes are implemented.
 - Limit web usage to official documentation, issue trackers, and authoritative project sources.
 
 ## Approach
