@@ -5,6 +5,11 @@ import os
 import requests
 
 from browserprint.auth_config import AuthConfigStore
+from browserprint.settings import (
+    DOWNLOAD_TIMEOUT_SECONDS,
+    LARAVEL_AUTH_HEADER,
+    MAX_PDF_BYTES,
+)
 
 
 class PDFDownloadError(RuntimeError):
@@ -39,9 +44,9 @@ def _resolve_bearer_token(token: str | None) -> str:
 
 def fetch_pdf(url: str, token: str | None = None) -> bytes:
     """Download a PDF from URL using Sanctum bearer token from environment."""
-    timeout_seconds = int(os.getenv("BROWSERPRINT_DOWNLOAD_TIMEOUT_SECONDS", "20"))
-    max_pdf_bytes = int(os.getenv("BROWSERPRINT_MAX_PDF_BYTES", str(10 * 1024 * 1024)))
-    auth_header = os.getenv("BROWSERPRINT_LARAVEL_AUTH_HEADER", "Authorization")
+    timeout_seconds = DOWNLOAD_TIMEOUT_SECONDS
+    max_pdf_bytes = MAX_PDF_BYTES
+    auth_header = LARAVEL_AUTH_HEADER
     bearer_token = _resolve_bearer_token(token)
 
     headers = {

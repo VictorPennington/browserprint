@@ -8,8 +8,9 @@ from dataclasses import dataclass
 import requests
 
 from browserprint.auth_utils import validate_base_url
+from browserprint.settings import MANUAL_REQUEST_TIMEOUT_SECONDS
 
-_DEFAULT_TIMEOUT_SECONDS = 20
+_DEFAULT_TIMEOUT_SECONDS = MANUAL_REQUEST_TIMEOUT_SECONDS
 _MAX_BODY_PREVIEW_CHARS = 1200
 _ALLOWED_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
 

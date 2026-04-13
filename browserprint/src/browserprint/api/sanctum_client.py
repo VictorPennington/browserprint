@@ -6,7 +6,9 @@ from dataclasses import dataclass
 
 import requests
 
-_DEFAULT_TIMEOUT_SECONDS = 15
+from browserprint.settings import SANCTUM_TIMEOUT_SECONDS
+
+_DEFAULT_TIMEOUT_SECONDS = SANCTUM_TIMEOUT_SECONDS
 
 
 @dataclass(slots=True)

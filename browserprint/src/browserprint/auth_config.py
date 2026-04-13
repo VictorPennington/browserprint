@@ -2,27 +2,30 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-_DEFAULT_CONFIG_DIR = Path.home() / ".browserprint"
-_DEFAULT_CONFIG_FILE = "auth_config.json"
+from browserprint.settings import (
+    DEFAULT_API_BASE_URL,
+    DEFAULT_CONFIG_DIR,
+    DEFAULT_CONFIG_FILE,
+)
 
 
 def _load_keyring_module():
     try:
-        import keyring
+        return importlib.import_module("keyring")
     except Exception:
         return None
-    return keyring
 
 
 @dataclass(slots=True)
 class AuthConfig:
-    api_base_url: str = "http://localhost"
+    api_base_url: str = DEFAULT_API_BASE_URL
     email: str = ""
     device_name: str = "browserprint"
     replace_existing: bool = False
@@ -34,7 +37,7 @@ class AuthConfig:
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> AuthConfig:
         return cls(
-            api_base_url=str(payload.get("api_base_url", "http://localhost")),
+            api_base_url=str(payload.get("api_base_url", DEFAULT_API_BASE_URL)),
             email=str(payload.get("email", "")),
             device_name=str(payload.get("device_name", "browserprint")),
             replace_existing=bool(payload.get("replace_existing", False)),
@@ -51,12 +54,12 @@ class AuthConfigStore:
     def __init__(
         self,
         config_dir: Path | None = None,
-        config_filename: str = _DEFAULT_CONFIG_FILE,
+        config_filename: str = DEFAULT_CONFIG_FILE,
         keyring_module: Any | None = None,
         keyring_service_name: str = "browserprint",
         keyring_account_name: str = "sanctum_token",
     ) -> None:
-        self.config_dir = config_dir or _DEFAULT_CONFIG_DIR
+        self.config_dir = config_dir or DEFAULT_CONFIG_DIR
         self.config_path = self.config_dir / config_filename
         self._keyring = (
             keyring_module if keyring_module is not None else _load_keyring_module()

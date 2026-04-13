@@ -9,6 +9,7 @@ from toga.constants import COLUMN
 from toga.style import Pack
 
 from browserprint.api.server import run_local_server
+from browserprint.settings import LOCAL_API_HOST, LOCAL_API_PORT
 from browserprint.ui.auth_settings import AuthSettingsController
 from browserprint.ui.download_pdf import DownloadPdfController
 from browserprint.ui.log_panel import LogPanel
@@ -52,7 +53,7 @@ class BrowserPrint(toga.App):
         # Run the local API server without blocking the UI event loop.
         self.api_thread = threading.Thread(
             target=run_local_server,
-            kwargs={"host": "127.0.0.1", "port": 8003},
+            kwargs={"host": LOCAL_API_HOST, "port": LOCAL_API_PORT},
             daemon=True,
             name="browserprint-local-api",
         )

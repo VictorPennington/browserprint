@@ -16,10 +16,11 @@ from toga.style import Pack
 from browserprint.api.pdf_fetcher import PDFDownloadError, fetch_pdf
 from browserprint.auth_config import AuthConfigStore
 from browserprint.auth_utils import validate_base_url, wrap_status_message
+from browserprint.settings import DEBUG_OUTPUT_DIR
 
 logger = logging.getLogger("browserprint.ui.download_pdf")
 
-_DEFAULT_OUTPUT_DIR = Path.home() / "Desktop" / "debug_pdfs"
+_DEFAULT_OUTPUT_DIR = DEBUG_OUTPUT_DIR
 
 
 class DownloadPdfController:

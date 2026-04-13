@@ -4,31 +4,21 @@ import logging
 import time
 
 import uvicorn
-from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+
+from browserprint.settings import ALLOWED_ORIGINS, LOCAL_API_HOST, LOCAL_API_PORT
 
 from .routes import router
 
 logger = logging.getLogger("browserprint.api.server")
 
-# Origins allowed to call this local API from a browser page.
-_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:8003",
-    "http://127.0.0.1",
-    "http://localhost",
-    "http://localhost:8000",
-    "http://localhost:8003",
-]
-
 
 def create_app() -> FastAPI:
-    load_dotenv()
     api = FastAPI(title="BrowserPrint Local API")
     api.add_middleware(
         CORSMiddleware,
-        allow_origins=_ALLOWED_ORIGINS,
+        allow_origins=ALLOWED_ORIGINS,
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "X-CSRF-TOKEN"],
     )
@@ -54,6 +44,6 @@ def create_app() -> FastAPI:
 app = create_app()
 
 
-def run_local_server(host: str = "127.0.0.1", port: int = 8003) -> None:
+def run_local_server(host: str = LOCAL_API_HOST, port: int = LOCAL_API_PORT) -> None:
     logger.info("Starting local API server on %s:%s", host, port)
     uvicorn.run(app, host=host, port=port)

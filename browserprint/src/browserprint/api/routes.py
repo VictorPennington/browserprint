@@ -11,12 +11,14 @@ from uuid import uuid4
 from fastapi import APIRouter
 from pydantic import BaseModel, Field, field_validator
 
+from browserprint.settings import DEBUG_OUTPUT_DIR, SUMATRA_PATH
+
 from .pdf_fetcher import PDFDownloadError, fetch_pdf
 
 router = APIRouter()
 logger = logging.getLogger("browserprint.api.routes")
 
-_DEBUG_OUTPUT_DIR = Path.home() / "Desktop" / "debug_pdfs"
+_DEBUG_OUTPUT_DIR = DEBUG_OUTPUT_DIR
 _DOWNLOAD_QUEUE: queue.Queue = queue.Queue()
 
 
@@ -38,13 +40,7 @@ _download_worker_thread = threading.Thread(
 )
 _download_worker_thread.start()
 
-_SUMATRA_PDF_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "resources"
-    / "vendor"
-    / "sumatrapdf"
-    / "SumatraPDF-3.6-64.exe"
-)
+_SUMATRA_PDF_PATH = SUMATRA_PATH
 
 
 class PrintRequest(BaseModel):

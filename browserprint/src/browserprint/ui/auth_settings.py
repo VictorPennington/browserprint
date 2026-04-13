@@ -13,6 +13,7 @@ from toga.style import Pack
 from browserprint.api.sanctum_client import SanctumClient, SanctumClientError
 from browserprint.auth_config import AuthConfig, AuthConfigStore
 from browserprint.auth_utils import validate_base_url, wrap_status_message
+from browserprint.settings import DEFAULT_API_BASE_URL
 
 logger = logging.getLogger("browserprint.ui.auth_settings")
 
@@ -48,7 +49,7 @@ class AuthSettingsController:
 
         self.api_base_url_input = toga.TextInput(
             value=self.auth_config.api_base_url,
-            placeholder="http://localhost",
+            placeholder=DEFAULT_API_BASE_URL,
             style=Pack(flex=1),
         )
         self.email_input = toga.TextInput(
@@ -127,7 +128,7 @@ class AuthSettingsController:
 
         base_url_candidate = (
             self.api_base_url_input.value or ""
-        ).strip() or "http://localhost"
+        ).strip() or DEFAULT_API_BASE_URL
         try:
             base_url = validate_base_url(base_url_candidate)
         except ValueError as exc:
