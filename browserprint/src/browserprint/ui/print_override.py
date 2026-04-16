@@ -15,15 +15,15 @@ class PrintOverridePanel:
     def __init__(self) -> None:
         self._disable_print_switch = toga.Switch(
             text="Disable printing (download only)",
-            style=Pack(padding_right=16),
+            style=Pack(margin_right=16),
         )
         self._open_folder_button = toga.Button(
             "Open Download Folder",
             on_press=self._on_open_folder,
-            style=Pack(padding_top=4),
+            style=Pack(margin_top=4),
         )
         disable_row = toga.Box(
-            style=Pack(direction=COLUMN, padding_right=16),
+            style=Pack(direction=COLUMN, margin_right=16),
             children=[self._disable_print_switch, self._open_folder_button],
         )
         self._switch = toga.Switch(
@@ -32,11 +32,11 @@ class PrintOverridePanel:
         )
         self._input = toga.TextInput(
             placeholder="e.g. ZDesigner GK420d",
-            style=Pack(flex=1, padding_left=8),
+            style=Pack(flex=1, margin_left=8),
         )
         self._input.enabled = False
         self.widget = toga.Box(
-            style=Pack(direction=ROW, padding_top=8),
+            style=Pack(direction=ROW, margin_top=8),
             children=[disable_row, self._switch, self._input],
         )
 

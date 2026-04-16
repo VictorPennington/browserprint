@@ -27,8 +27,8 @@ class BrowserPrint(toga.App):
         We then create a main window (with a name matching the app), and
         show the main window.
         """
-        main_box = toga.Box(style=Pack(direction=COLUMN, padding=10, flex=1))
-        main_box.add(toga.Label("Application logs", style=Pack(padding_bottom=6)))
+        main_box = toga.Box(style=Pack(direction=COLUMN, margin=10, flex=1))
+        main_box.add(toga.Label("Application logs", style=Pack(margin_bottom=6)))
 
         self.log_panel = LogPanel()
         main_box.add(self.log_panel.widget)
@@ -125,30 +125,18 @@ class BrowserPrint(toga.App):
             self.main_window.show()
 
     def _setup_tray(self) -> None:
-        """Create a system-tray menu icon for show/hide and exit."""
-        self._tray_icon = toga.MenuStatusIcon(
+        """Create a system-tray icon; clicking it toggles the main window."""
+        self._tray_icon = toga.SimpleStatusIcon(
             text=self.formal_name,
+            on_press=self._on_tray_press,
         )
-
-        show_cmd = toga.Command(
-            self._on_tray_show,
-            text="Show BrowserPrint",
-            group=self._tray_icon,
-        )
-        exit_cmd = toga.Command(
-            self._on_tray_exit,
-            text="Exit",
-            group=self._tray_icon,
-        )
-
         self.status_icons.add(self._tray_icon)
-        self.status_icons.commands.add(show_cmd, exit_cmd)
 
-    def _on_tray_show(self, widget=None, **kwargs) -> None:
-        self.main_window.show()
-
-    def _on_tray_exit(self, widget=None, **kwargs) -> None:
-        self.request_exit()
+    def _on_tray_press(self, widget=None, **kwargs) -> None:
+        if self.main_window.visible:
+            self.main_window.hide()
+        else:
+            self.main_window.show()
 
     def _on_main_window_close(self, window, **kwargs) -> bool:
         """Minimize to tray instead of exiting when the window is closed."""

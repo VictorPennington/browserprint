@@ -40,7 +40,7 @@ class MakeRequestController:
 
     def build_panel(self) -> toga.Box:
         """Build and return the panel as a toga.Box for embedding."""
-        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=4))
+        content = toga.Box(style=Pack(direction=COLUMN, margin=12, gap=4))
         self._build_content(content)
         self._refresh_values()
         return content
@@ -55,7 +55,7 @@ class MakeRequestController:
         self.request_window.show()
 
     def _build_window(self) -> None:
-        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=4))
+        content = toga.Box(style=Pack(direction=COLUMN, margin=12, gap=4))
         self._build_content(content)
 
         self.request_window = toga.Window(title="Make Request")

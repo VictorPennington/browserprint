@@ -37,7 +37,7 @@ class AuthSettingsController:
 
     def build_panel(self) -> toga.Box:
         """Build and return the settings panel as a toga.Box for embedding."""
-        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=4))
+        content = toga.Box(style=Pack(direction=COLUMN, margin=12, gap=4))
         self._build_content(content)
         self._refresh_values()
         return content
@@ -52,7 +52,7 @@ class AuthSettingsController:
         self.auth_window.show()
 
     def _build_window(self) -> None:
-        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=4))
+        content = toga.Box(style=Pack(direction=COLUMN, margin=12, gap=4))
         self._build_content(content)
 
         self.auth_window = toga.Window(title="eDiary Authentication")

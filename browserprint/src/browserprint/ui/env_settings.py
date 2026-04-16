@@ -106,7 +106,7 @@ class EnvSettingsController:
     def build_panel(self) -> toga.Box:
         """Build and return the settings panel as an embeddable toga.Box."""
         self._env = _read_env_file(_ENV_PATH)
-        panel = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=6))
+        panel = toga.Box(style=Pack(direction=COLUMN, margin=12, gap=6))
         self._build_content(panel)
         return panel
 
@@ -117,13 +117,11 @@ class EnvSettingsController:
     def _build_content(self, panel: toga.Box) -> None:
         # ── Server section ─────────────────────────────────────────────
         panel.add(
-            toga.Label(
-                "Local API Server", style=Pack(font_weight="bold", padding_top=4)
-            )
+            toga.Label("Local API Server", style=Pack(font_weight="bold", margin_top=4))
         )
-        panel.add(toga.Divider(style=Pack(padding_bottom=4)))
+        panel.add(toga.Divider(style=Pack(margin_bottom=4)))
 
-        section_server = toga.Box(style=Pack(direction=COLUMN, padding_left=12, gap=2))
+        section_server = toga.Box(style=Pack(direction=COLUMN, margin_left=12, gap=2))
         self._host_input = toga.TextInput(
             value=self._env.get(
                 "BROWSERPRINT_LOCAL_API_HOST", _settings.LOCAL_API_HOST
@@ -145,13 +143,11 @@ class EnvSettingsController:
 
         # ── Laravel backend section ────────────────────────────────────
         panel.add(
-            toga.Label(
-                "Laravel Backend", style=Pack(font_weight="bold", padding_top=10)
-            )
+            toga.Label("Laravel Backend", style=Pack(font_weight="bold", margin_top=10))
         )
-        panel.add(toga.Divider(style=Pack(padding_bottom=4)))
+        panel.add(toga.Divider(style=Pack(margin_bottom=4)))
 
-        section_laravel = toga.Box(style=Pack(direction=COLUMN, padding_left=12, gap=2))
+        section_laravel = toga.Box(style=Pack(direction=COLUMN, margin_left=12, gap=2))
         self._base_url_input = toga.TextInput(
             value=self._env.get(
                 "BROWSERPRINT_DEFAULT_API_BASE_URL", _settings.DEFAULT_API_BASE_URL
@@ -178,10 +174,10 @@ class EnvSettingsController:
         panel.add(section_laravel)
 
         # ── Files section ──────────────────────────────────────────────
-        panel.add(toga.Label("Files", style=Pack(font_weight="bold", padding_top=10)))
-        panel.add(toga.Divider(style=Pack(padding_bottom=4)))
+        panel.add(toga.Label("Files", style=Pack(font_weight="bold", margin_top=10)))
+        panel.add(toga.Divider(style=Pack(margin_bottom=4)))
 
-        section_files = toga.Box(style=Pack(direction=COLUMN, padding_left=12, gap=2))
+        section_files = toga.Box(style=Pack(direction=COLUMN, margin_left=12, gap=2))
         self._output_dir_input = toga.TextInput(
             value=self._env.get(
                 "BROWSERPRINT_DEBUG_OUTPUT_DIR", str(_settings.DEBUG_OUTPUT_DIR)
@@ -203,14 +199,12 @@ class EnvSettingsController:
         # ── Timeouts section ───────────────────────────────────────────
         panel.add(
             toga.Label(
-                "Timeouts (seconds)", style=Pack(font_weight="bold", padding_top=10)
+                "Timeouts (seconds)", style=Pack(font_weight="bold", margin_top=10)
             )
         )
-        panel.add(toga.Divider(style=Pack(padding_bottom=4)))
+        panel.add(toga.Divider(style=Pack(margin_bottom=4)))
 
-        section_timeouts = toga.Box(
-            style=Pack(direction=COLUMN, padding_left=12, gap=2)
-        )
+        section_timeouts = toga.Box(style=Pack(direction=COLUMN, margin_left=12, gap=2))
         self._sanctum_timeout_input = toga.TextInput(
             value=self._env.get(
                 "BROWSERPRINT_SANCTUM_TIMEOUT_SECONDS",
@@ -249,10 +243,10 @@ class EnvSettingsController:
         panel.add(section_timeouts)
 
         # ── Startup section ────────────────────────────────────────────
-        panel.add(toga.Label("Startup", style=Pack(font_weight="bold", padding_top=10)))
-        panel.add(toga.Divider(style=Pack(padding_bottom=4)))
+        panel.add(toga.Label("Startup", style=Pack(font_weight="bold", margin_top=10)))
+        panel.add(toga.Divider(style=Pack(margin_bottom=4)))
 
-        section_startup = toga.Box(style=Pack(direction=COLUMN, padding_left=12, gap=2))
+        section_startup = toga.Box(style=Pack(direction=COLUMN, margin_left=12, gap=2))
         start_minimized_env = self._env.get("BROWSERPRINT_START_MINIMIZED", "")
         start_minimized_value = start_minimized_env.lower() in ("1", "true", "yes")
         self._start_minimized_switch = toga.Switch(
@@ -273,7 +267,7 @@ class EnvSettingsController:
         # ── Save button + status label ─────────────────────────────────
         panel.add(toga.Box(style=Pack(flex=1)))  # spacer
 
-        status_row = toga.Box(style=Pack(direction=ROW, padding_top=10))
+        status_row = toga.Box(style=Pack(direction=ROW, margin_top=10))
         self._status_label = toga.Label(
             "",
             style=Pack(flex=1, color="#2d7a2d"),
@@ -291,7 +285,7 @@ class EnvSettingsController:
     def _field_row(
         self, label_text: str, field_widget: toga.Widget, hint: str = ""
     ) -> toga.Box:
-        row = toga.Box(style=Pack(direction=ROW, padding_top=1, padding_bottom=1))
+        row = toga.Box(style=Pack(direction=ROW, margin_top=1, margin_bottom=1))
         label = label_text if not hint else f"{label_text} ({hint})"
         row.add(toga.Label(label, style=Pack(width=_LABEL_WIDTH, margin_right=6)))
         row.add(field_widget)
