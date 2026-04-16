@@ -22,6 +22,7 @@ test_sources = [
 
 requires = [
     "fastapi",
+    "keyring",
     "python-dotenv",
     "requests",
     "uvicorn",

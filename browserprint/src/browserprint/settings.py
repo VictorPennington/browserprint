@@ -104,9 +104,7 @@ DEBUG_OUTPUT_DIR = _get_env_path(
 
 SUMATRA_PATH = _get_env_path(
     "BROWSERPRINT_SUMATRA_PATH",
-    _PROJECT_ROOT
-    / "src"
-    / "browserprint"
+    Path(__file__).resolve().parent
     / "resources"
     / "vendor"
     / "sumatrapdf"
