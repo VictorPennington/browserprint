@@ -7,7 +7,7 @@ import threading
 from collections.abc import Callable
 
 import toga
-from toga.constants import COLUMN, ROW
+from toga.constants import BOLD, COLUMN, ROW
 from toga.style import Pack
 
 from browserprint.api.sanctum_client import SanctumClient, SanctumClientError
@@ -37,7 +37,7 @@ class AuthSettingsController:
 
     def build_panel(self) -> toga.Box:
         """Build and return the settings panel as a toga.Box for embedding."""
-        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=8))
+        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=4))
         self._build_content(content)
         self._refresh_values()
         return content
@@ -52,7 +52,7 @@ class AuthSettingsController:
         self.auth_window.show()
 
     def _build_window(self) -> None:
-        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=8))
+        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=4))
         self._build_content(content)
 
         self.auth_window = toga.Window(title="eDiary Authentication")
@@ -88,7 +88,7 @@ class AuthSettingsController:
         )
 
         def _row(label_text: str, field: toga.Widget) -> toga.Box:
-            row = toga.Box(style=Pack(direction=ROW, gap=8, margin_bottom=4))
+            row = toga.Box(style=Pack(direction=ROW, gap=8, margin_bottom=2))
             row.add(toga.Label(label_text, style=Pack(width=_LABEL_WIDTH)))
             row.add(field)
             return row
@@ -99,31 +99,36 @@ class AuthSettingsController:
         content.add(_row("Device Name", self.device_name_input))
         content.add(self.replace_existing_switch)
 
-        button_row = toga.Box(style=Pack(direction=ROW, margin_top=8, gap=8))
+        self.auth_status_output = toga.MultilineTextInput(
+            readonly=True,
+            value="Token state: unknown",
+            style=Pack(margin_top=6, height=50, flex=0),
+        )
+        content.add(self.auth_status_output)
+
+        button_row = toga.Box(style=Pack(direction=ROW, margin_top=8, gap=8, flex=1))
+        button_row.add(toga.Box(style=Pack(flex=1)))  # spacer
         self.save_settings_button = toga.Button(
-            "Save Settings", on_press=self._save_auth_settings
+            "Save Settings",
+            on_press=self._save_auth_settings,
+            style=Pack(font_weight=BOLD),
         )
         self.generate_token_button = toga.Button(
-            "Generate Token", on_press=self._generate_token
+            "Generate Token",
+            on_press=self._generate_token,
+            style=Pack(font_weight=BOLD),
         )
         self.test_session_button = toga.Button(
-            "Test Session", on_press=self._test_session
+            "Test Session", on_press=self._test_session, style=Pack(font_weight=BOLD)
         )
         self.revoke_token_button = toga.Button(
-            "Revoke Token", on_press=self._revoke_token
+            "Revoke Token", on_press=self._revoke_token, style=Pack(font_weight=BOLD)
         )
         button_row.add(self.save_settings_button)
         button_row.add(self.generate_token_button)
         button_row.add(self.test_session_button)
         button_row.add(self.revoke_token_button)
         content.add(button_row)
-
-        self.auth_status_output = toga.MultilineTextInput(
-            readonly=True,
-            value="Token state: unknown",
-            style=Pack(margin_top=6, height=84, flex=0),
-        )
-        content.add(self.auth_status_output)
 
     def _refresh_values(self) -> None:
         self.api_base_url_input.value = self.auth_config.api_base_url

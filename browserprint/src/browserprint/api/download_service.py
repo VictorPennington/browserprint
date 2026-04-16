@@ -14,6 +14,16 @@ logger = logging.getLogger("browserprint.api.download_service")
 _DEBUG_OUTPUT_DIR = DEBUG_OUTPUT_DIR
 
 
+def _is_printing_disabled() -> bool:
+    return False
+
+
+def set_printing_disabled_provider(fn) -> None:
+    """Register a callable that returns True when printing should be suppressed."""
+    global _is_printing_disabled
+    _is_printing_disabled = fn
+
+
 def format_url_for_log(url: str) -> str:
     parsed = urlparse(url)
     path = parsed.path or "/"
@@ -73,12 +83,19 @@ def run_download_job(
         logger.info("download started for: \n     %s", format_url_for_log(pdf_url))
         pdf_bytes = fetch_pdf(pdf_url)
         output_path.write_bytes(pdf_bytes)
-        logger.info(
-            "Download successful, queued for print!\n     filename= %s \n     command= %s",
-            output_path,
-            printer_command,
-        )
-        print_queue.put((request_id, output_path, printer_command))
+        if _is_printing_disabled():
+            logger.info(
+                "Download successful (printing disabled).\n     filename= %s",
+                output_path,
+            )
+        else:
+            logger.info(
+                "Download successful, queued for print!\n     filename= %s \n     command= %s",
+                output_path,
+                printer_command,
+            )
+        if not _is_printing_disabled():
+            print_queue.put((request_id, output_path, printer_command))
     except PDFDownloadError as exc:
         logger.error("download_failed request_id=%s reason=%s", request_id, exc)
     except OSError as exc:

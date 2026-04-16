@@ -3,24 +3,24 @@
 import toga
 from toga.style import Pack
 
+_SEPARATOR = "-" * 55
+
 
 class LogPanel:
-    """Owns the log table widget and appends lines with a size cap.
-
-    Uses headings=None with an explicit accessor to suppress the column header.
-    Rows are prepended via insert(0) so the full list is never rebuilt.
-    """
+    """Owns the log multiline text widget and prepends new entries."""
 
     def __init__(self, max_lines: int = 400) -> None:
         self._max_lines = max_lines
-        self.widget = toga.Table(
-            headings=None,
-            accessors=["log"],
-            missing_value="",
-            style=Pack(height=200, width=800, flex=1),
+        self._lines: list[str] = []
+        self.widget = toga.MultilineTextInput(
+            readonly=True,
+            style=Pack(flex=1),
         )
 
     def append_line(self, line: str) -> None:
-        self.widget.data.insert(0, (line,))
-        if len(self.widget.data) > self._max_lines:
-            del self.widget.data[self._max_lines]
+        entry = f"{line}\n{_SEPARATOR}"
+        self._lines.insert(0, entry)
+        if len(self._lines) > self._max_lines:
+            self._lines = self._lines[: self._max_lines]
+        self.widget.value = "\n".join(self._lines)
+        self.widget.scroll_to_top()

@@ -12,6 +12,7 @@ from browserprint.api.server import run_local_server
 from browserprint.settings import LOCAL_API_HOST, LOCAL_API_PORT
 from browserprint.ui.auth_settings import AuthSettingsController
 from browserprint.ui.download_pdf import DownloadPdfController
+from browserprint.ui.env_settings import EnvSettingsController
 from browserprint.ui.log_panel import LogPanel
 from browserprint.ui.logging import install_app_log_handler
 from browserprint.ui.make_request import MakeRequestController
@@ -35,9 +36,15 @@ class BrowserPrint(toga.App):
         self.print_override_panel = PrintOverridePanel()
         main_box.add(self.print_override_panel.widget)
 
-        from browserprint.api import routes as _routes
+        from browserprint.api import (
+            download_service as _download_service,
+            routes as _routes,
+        )
 
         _routes.set_print_override_provider(self.print_override_panel.get_override)
+        _download_service.set_printing_disabled_provider(
+            self.print_override_panel.is_printing_disabled
+        )
 
         self.auth_controller = AuthSettingsController(
             app=self,
@@ -52,24 +59,43 @@ class BrowserPrint(toga.App):
             log_line=self.log_panel.append_line,
         )
 
-        commands_container = toga.OptionContainer(
+        def _scrollable_panel(panel: toga.Widget) -> toga.ScrollContainer:
+            return toga.ScrollContainer(
+                content=panel,
+                horizontal=False,
+                vertical=True,
+                style=Pack(flex=1),
+            )
+
+        self.env_settings_controller = EnvSettingsController(
+            app=self,
+            on_close=self._show_main_tab,
+        )
+
+        self._commands_container = toga.OptionContainer(
             content=[
                 toga.OptionItem(
                     "Token Config",
-                    self.auth_controller.build_panel(),
+                    _scrollable_panel(self.auth_controller.build_panel()),
                 ),
                 toga.OptionItem(
                     "Make Request",
-                    self.make_request_controller.build_panel(),
+                    _scrollable_panel(self.make_request_controller.build_panel()),
                 ),
                 toga.OptionItem(
                     "Download PDF",
-                    self.download_pdf_controller.build_panel(),
+                    _scrollable_panel(self.download_pdf_controller.build_panel()),
+                ),
+                toga.OptionItem(
+                    "Settings",
+                    _scrollable_panel(self.env_settings_controller.build_panel()),
                 ),
             ],
             style=Pack(flex=1),
         )
-        main_box.add(commands_container)
+        main_box.add(self._commands_container)
+
+        self._main_content = main_box
 
         install_app_log_handler(self._emit_log_line)
         self.log_panel.append_line("Starting BrowserPrint...")
@@ -85,9 +111,14 @@ class BrowserPrint(toga.App):
         )
         self.api_thread.start()
 
-        self.main_window = toga.MainWindow(title=self.formal_name)
-        self.main_window.content = main_box
+        self.main_window = toga.MainWindow(
+            title=self.formal_name, size=(800, 600), position=(0, 0)
+        )
+        self.main_window.content = self._main_content
         self.main_window.show()
+
+    def _show_main_tab(self) -> None:
+        self._commands_container.current_tab = self._commands_container.content[0]
 
     def _emit_log_line(self, line: str) -> None:
         self.loop.call_soon_threadsafe(self.log_panel.append_line, line)

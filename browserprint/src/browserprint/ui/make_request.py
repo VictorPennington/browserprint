@@ -7,7 +7,7 @@ import threading
 from collections.abc import Callable
 
 import toga
-from toga.constants import COLUMN, ROW
+from toga.constants import BOLD, COLUMN, ROW
 from toga.style import Pack
 
 from browserprint.api.manual_request_client import (
@@ -40,7 +40,7 @@ class MakeRequestController:
 
     def build_panel(self) -> toga.Box:
         """Build and return the panel as a toga.Box for embedding."""
-        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=8))
+        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=4))
         self._build_content(content)
         self._refresh_values()
         return content
@@ -55,52 +55,59 @@ class MakeRequestController:
         self.request_window.show()
 
     def _build_window(self) -> None:
-        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=8))
+        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=4))
         self._build_content(content)
 
         self.request_window = toga.Window(title="Make Request")
         self.request_window.content = content
 
     def _build_content(self, content: toga.Box) -> None:
+        _LABEL_WIDTH = 160
 
-        content.add(toga.Label("Saved API Base URL"))
-        self.base_url_value = toga.Label("", style=Pack(padding_bottom=4))
-        content.add(self.base_url_value)
+        def _row(label_text: str, field: toga.Widget) -> toga.Box:
+            row = toga.Box(style=Pack(direction=ROW, gap=8, margin_bottom=2))
+            row.add(toga.Label(label_text, style=Pack(width=_LABEL_WIDTH)))
+            row.add(field)
+            return row
 
-        content.add(toga.Label("Endpoint Path (or full URL)"))
+        self.base_url_value = toga.Label("")
+        content.add(_row("Saved API Base URL", self.base_url_value))
+
         self.endpoint_input = toga.TextInput(
             value="/api/browserprint/ping",
             placeholder="/api/example/path",
-            style=Pack(flex=1),
+            style=Pack(width=500),
         )
-        content.add(self.endpoint_input)
+        content.add(_row("Endpoint Path (or full URL)", self.endpoint_input))
 
-        content.add(toga.Label("HTTP Method"))
         self.method_input = toga.TextInput(
             value="POST",
             placeholder="GET, POST, PUT, PATCH, DELETE",
             style=Pack(width=220),
         )
-        content.add(self.method_input)
+        content.add(_row("HTTP Method", self.method_input))
 
         content.add(toga.Label("JSON Payload (optional)"))
         self.payload_input = toga.MultilineTextInput(
             value="{}",
-            style=Pack(height=120, flex=0),
+            style=Pack(height=50, flex=0),
         )
         content.add(self.payload_input)
-
-        button_row = toga.Box(style=Pack(direction=ROW, margin_top=8, gap=8))
-        self.send_button = toga.Button("Send", on_press=self._send_request)
-        button_row.add(self.send_button)
-        content.add(button_row)
 
         self.request_status_output = toga.MultilineTextInput(
             readonly=True,
             value="Ready to send a request.",
-            style=Pack(margin_top=6, height=120, flex=0),
+            style=Pack(margin_top=6, height=50, flex=0),
         )
         content.add(self.request_status_output)
+
+        button_row = toga.Box(style=Pack(direction=ROW, margin_top=8, gap=8, flex=1))
+        button_row.add(toga.Box(style=Pack(flex=1)))  # spacer
+        self.send_button = toga.Button(
+            "Send", on_press=self._send_request, style=Pack(font_weight=BOLD)
+        )
+        button_row.add(self.send_button)
+        content.add(button_row)
 
     def _refresh_values(self) -> None:
         self.base_url_value.text = self.auth_config.api_base_url

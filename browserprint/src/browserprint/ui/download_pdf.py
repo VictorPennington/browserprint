@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import toga
-from toga.constants import COLUMN, ROW
+from toga.constants import BOLD, COLUMN, ROW
 from toga.style import Pack
 
 from browserprint.api.pdf_fetcher import PDFDownloadError, fetch_pdf
@@ -44,7 +44,7 @@ class DownloadPdfController:
 
     def build_panel(self) -> toga.Box:
         """Build and return the panel as a toga.Box for embedding."""
-        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=8))
+        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=4))
         self._build_content(content)
         self._refresh_values()
         return content
@@ -59,37 +59,45 @@ class DownloadPdfController:
         self.download_window.show()
 
     def _build_window(self) -> None:
-        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=8))
+        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=4))
         self._build_content(content)
 
         self.download_window = toga.Window(title="Download PDF")
         self.download_window.content = content
 
     def _build_content(self, content: toga.Box) -> None:
+        _LABEL_WIDTH = 160
 
-        content.add(toga.Label("Saved API Base URL"))
-        self.base_url_value = toga.Label("", style=Pack(padding_bottom=4))
-        content.add(self.base_url_value)
+        def _row(label_text: str, field: toga.Widget) -> toga.Box:
+            row = toga.Box(style=Pack(direction=ROW, gap=8, margin_bottom=2))
+            row.add(toga.Label(label_text, style=Pack(width=_LABEL_WIDTH)))
+            row.add(field)
+            return row
 
-        content.add(toga.Label("PDF Endpoint Path (or full URL)"))
+        self.base_url_value = toga.Label("")
+        content.add(_row("Saved API Base URL", self.base_url_value))
+
         self.endpoint_input = toga.TextInput(
             value="/api/browserprint/pdf",
             placeholder="/api/browserprint/documents/123",
             style=Pack(flex=1),
         )
-        content.add(self.endpoint_input)
-
-        button_row = toga.Box(style=Pack(direction=ROW, margin_top=8, gap=8))
-        self.download_button = toga.Button("Download", on_press=self._download_pdf)
-        button_row.add(self.download_button)
-        content.add(button_row)
+        content.add(_row("PDF Endpoint Path (or full URL)", self.endpoint_input))
 
         self.download_status_output = toga.MultilineTextInput(
             readonly=True,
             value="Ready to download a PDF.",
-            style=Pack(margin_top=6, height=120, flex=0),
+            style=Pack(margin_top=6, height=50, flex=0),
         )
         content.add(self.download_status_output)
+
+        button_row = toga.Box(style=Pack(direction=ROW, margin_top=8, gap=8, flex=1))
+        button_row.add(toga.Box(style=Pack(flex=1)))  # spacer
+        self.download_button = toga.Button(
+            "Download", on_press=self._download_pdf, style=Pack(font_weight=BOLD)
+        )
+        button_row.add(self.download_button)
+        content.add(button_row)
 
     def _refresh_values(self) -> None:
         self.base_url_value.text = self.auth_config.api_base_url

@@ -166,6 +166,77 @@ widget = toga.Label("Hello", flex=1, padding=10)
 
 **Windows CSS-pixel note:** 1 CSS px = 1 physical px at 100% scale; scaled at higher DPI factors.
 
+### Button Styling (Windows / WinForms)
+
+`toga.Button` supports Pack style properties via the `style=` constructor argument or `Pack(...)` directly.
+
+**What works on Windows:**
+
+| Property | Effect on Button |
+|----------|-----------------|
+| `background_color` | Sets the button background (use `toga.color` constants or hex) |
+| `color` | Sets the button label foreground color |
+| `margin` / `margin_top/right/bottom/left` | Adds outer spacing around the button |
+| `width` / `height` | Fixed size |
+| `flex` | Expands to fill available space |
+| `font_size`, `font_weight` | Changes label font |
+
+> **Note:** Not all Pack properties visually affect every widget on every backend.
+> On Windows/WinForms, `background_color` and `color` work on `Button`.
+> `padding` (inner spacing) is **not** a Pack property — use `margin` for outer spacing instead.
+> There is no border-radius or shadow support in Pack.
+
+**Example — distinctive action button:**
+
+```python
+from toga.style import Pack
+from toga.colors import RED, WHITE, BLUE
+
+btn_primary = toga.Button(
+    "Print",
+    on_press=handle_print,
+    style=Pack(
+        background_color=BLUE,
+        color=WHITE,
+        font_weight="bold",
+        font_size=12,
+        margin=8,          # 8px on all sides
+        width=120,
+        height=36,
+    ),
+)
+
+btn_danger = toga.Button(
+    "Cancel",
+    on_press=handle_cancel,
+    style=Pack(
+        background_color=RED,
+        color=WHITE,
+        margin_top=4,
+        margin_bottom=4,
+        margin_left=8,
+        margin_right=8,
+    ),
+)
+```
+
+**Runtime style update:**
+
+```python
+# Change style after creation
+btn_primary.style.background_color = BLUE
+btn_primary.style.color = WHITE
+btn_primary.refresh()  # force layout recalculation if needed
+```
+
+**Colors:** Use `toga.colors` named constants (`RED`, `GREEN`, `BLUE`, `WHITE`, `BLACK`, `YELLOW`, etc.) or `toga.colors.rgb(r, g, b)` / hex string `"#RRGGBB"`.
+
+```python
+from toga.colors import rgb, color as parse_color
+custom = rgb(30, 144, 255)   # dodger blue
+hex_col = parse_color("#1e90ff")
+```
+
 ---
 
 ## 4. Containers / Layout Widgets
