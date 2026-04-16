@@ -38,6 +38,13 @@ class MakeRequestController:
         self.auth_config = self.auth_store.load()
         self.request_window = None
 
+    def build_panel(self) -> toga.Box:
+        """Build and return the panel as a toga.Box for embedding."""
+        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=8))
+        self._build_content(content)
+        self._refresh_values()
+        return content
+
     def open(self, widget=None) -> None:
         self.auth_config = self.auth_store.load()
 
@@ -49,6 +56,12 @@ class MakeRequestController:
 
     def _build_window(self) -> None:
         content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=8))
+        self._build_content(content)
+
+        self.request_window = toga.Window(title="Make Request")
+        self.request_window.content = content
+
+    def _build_content(self, content: toga.Box) -> None:
 
         content.add(toga.Label("Saved API Base URL"))
         self.base_url_value = toga.Label("", style=Pack(padding_bottom=4))
@@ -88,9 +101,6 @@ class MakeRequestController:
             style=Pack(margin_top=6, height=120, flex=0),
         )
         content.add(self.request_status_output)
-
-        self.request_window = toga.Window(title="Make Request")
-        self.request_window.content = content
 
     def _refresh_values(self) -> None:
         self.base_url_value.text = self.auth_config.api_base_url

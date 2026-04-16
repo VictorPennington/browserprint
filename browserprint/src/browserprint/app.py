@@ -52,10 +52,28 @@ class BrowserPrint(toga.App):
             log_line=self.log_panel.append_line,
         )
 
+        commands_container = toga.OptionContainer(
+            content=[
+                toga.OptionItem(
+                    "Token Config",
+                    self.auth_controller.build_panel(),
+                ),
+                toga.OptionItem(
+                    "Make Request",
+                    self.make_request_controller.build_panel(),
+                ),
+                toga.OptionItem(
+                    "Download PDF",
+                    self.download_pdf_controller.build_panel(),
+                ),
+            ],
+            style=Pack(flex=1),
+        )
+        main_box.add(commands_container)
+
         install_app_log_handler(self._emit_log_line)
         self.log_panel.append_line("Starting BrowserPrint...")
 
-        self._install_toolbar_commands()
         self.log_panel.append_line(self.auth_controller.describe_token_state())
 
         # Run the local API server without blocking the UI event loop.
@@ -70,38 +88,6 @@ class BrowserPrint(toga.App):
         self.main_window = toga.MainWindow(title=self.formal_name)
         self.main_window.content = main_box
         self.main_window.show()
-
-    def _install_toolbar_commands(self) -> None:
-        self.commands.add(
-            toga.Command(
-                self._open_auth_settings,
-                text="Generate Bearer Token",
-                tooltip="Configure eDiary auth settings and token actions",
-            )
-        )
-        self.commands.add(
-            toga.Command(
-                self._open_make_request,
-                text="Make Request",
-                tooltip="Send custom authenticated requests for endpoint testing",
-            )
-        )
-        self.commands.add(
-            toga.Command(
-                self._open_download_pdf,
-                text="Download PDF",
-                tooltip="Download a PDF from an authenticated endpoint",
-            )
-        )
-
-    def _open_auth_settings(self, widget=None) -> None:
-        self.auth_controller.open(widget)
-
-    def _open_make_request(self, widget=None) -> None:
-        self.make_request_controller.open(widget)
-
-    def _open_download_pdf(self, widget=None) -> None:
-        self.download_pdf_controller.open(widget)
 
     def _emit_log_line(self, line: str) -> None:
         self.loop.call_soon_threadsafe(self.log_panel.append_line, line)

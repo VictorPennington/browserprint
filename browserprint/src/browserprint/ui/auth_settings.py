@@ -35,6 +35,13 @@ class AuthSettingsController:
             f"{self.auth_config.token_present}, storage: {self.auth_config.token_storage})."
         )
 
+    def build_panel(self) -> toga.Box:
+        """Build and return the settings panel as a toga.Box for embedding."""
+        content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=8))
+        self._build_content(content)
+        self._refresh_values()
+        return content
+
     def open(self, widget=None) -> None:
         self.auth_config = self.auth_store.load()
 
@@ -46,25 +53,33 @@ class AuthSettingsController:
 
     def _build_window(self) -> None:
         content = toga.Box(style=Pack(direction=COLUMN, padding=12, gap=8))
+        self._build_content(content)
+
+        self.auth_window = toga.Window(title="eDiary Authentication")
+        self.auth_window.content = content
+
+    def _build_content(self, content: toga.Box) -> None:
+        _LABEL_WIDTH = 120
+        _FIELD_WIDTH = 600
 
         self.api_base_url_input = toga.TextInput(
             value=self.auth_config.api_base_url,
             placeholder=DEFAULT_API_BASE_URL,
-            style=Pack(flex=1),
+            style=Pack(width=_FIELD_WIDTH),
         )
         self.email_input = toga.TextInput(
             value=self.auth_config.email,
             placeholder="user@example.com",
-            style=Pack(flex=1),
+            style=Pack(width=_FIELD_WIDTH),
         )
         self.password_input = toga.PasswordInput(
             placeholder="Password (not persisted)",
-            style=Pack(flex=1),
+            style=Pack(width=_FIELD_WIDTH),
         )
         self.device_name_input = toga.TextInput(
             value=self.auth_config.device_name,
             placeholder="browserprint",
-            style=Pack(flex=1),
+            style=Pack(width=_FIELD_WIDTH),
         )
         self.replace_existing_switch = toga.Switch(
             text="Replace existing token",
@@ -72,14 +87,16 @@ class AuthSettingsController:
             style=Pack(margin_top=4),
         )
 
-        content.add(toga.Label("API Base URL"))
-        content.add(self.api_base_url_input)
-        content.add(toga.Label("Email"))
-        content.add(self.email_input)
-        content.add(toga.Label("Password"))
-        content.add(self.password_input)
-        content.add(toga.Label("Device Name"))
-        content.add(self.device_name_input)
+        def _row(label_text: str, field: toga.Widget) -> toga.Box:
+            row = toga.Box(style=Pack(direction=ROW, gap=8, margin_bottom=4))
+            row.add(toga.Label(label_text, style=Pack(width=_LABEL_WIDTH)))
+            row.add(field)
+            return row
+
+        content.add(_row("API Base URL", self.api_base_url_input))
+        content.add(_row("Email", self.email_input))
+        content.add(_row("Password", self.password_input))
+        content.add(_row("Device Name", self.device_name_input))
         content.add(self.replace_existing_switch)
 
         button_row = toga.Box(style=Pack(direction=ROW, margin_top=8, gap=8))
@@ -107,9 +124,6 @@ class AuthSettingsController:
             style=Pack(margin_top=6, height=84, flex=0),
         )
         content.add(self.auth_status_output)
-
-        self.auth_window = toga.Window(title="eDiary Authentication")
-        self.auth_window.content = content
 
     def _refresh_values(self) -> None:
         self.api_base_url_input.value = self.auth_config.api_base_url
