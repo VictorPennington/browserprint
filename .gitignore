@@ -105,3 +105,4 @@ runtime/
 .vscode/
 .idea/
 .envrc
+debug_pdfs/
