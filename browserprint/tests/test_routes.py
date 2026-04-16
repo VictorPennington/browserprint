@@ -17,7 +17,7 @@ class FrozenDateTime:
 def _noop_sumatra_print(monkeypatch) -> None:
     """Prevent real Sumatra invocations in tests that don't care about printing."""
     monkeypatch.setattr(
-        "browserprint.api.routes.run_sumatra_print",
+        "browserprint.api.job_queue.run_sumatra_print",
         lambda sumatra_path, printer_command, output_path: None,
     )
 
@@ -60,9 +60,9 @@ def test_print_downloads_and_saves_pdf(monkeypatch, tmp_path: Path) -> None:
         called["url"] = url
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -74,9 +74,9 @@ def test_print_downloads_and_saves_pdf(monkeypatch, tmp_path: Path) -> None:
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
 
     assert response.status_code == 202
     assert response.json()["status"] == "accepted"
@@ -95,9 +95,9 @@ def test_print_download_errors_do_not_fail_http_ack(
     def fake_fetch_pdf(url: str) -> bytes:
         raise PDFDownloadError("download failed")
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -109,9 +109,9 @@ def test_print_download_errors_do_not_fail_http_ack(
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
 
     assert response.status_code == 202
     assert response.json()["status"] == "accepted"
@@ -125,9 +125,9 @@ def test_print_accepts_empty_customer_and_invoice_numbers(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -139,9 +139,9 @@ def test_print_accepts_empty_customer_and_invoice_numbers(
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
 
     assert response.status_code == 202
     assert (tmp_path / "2025_12_01_1235_____invoice.pdf").exists()
@@ -155,9 +155,9 @@ def test_print_accepts_null_customer_and_invoice_numbers(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -169,9 +169,9 @@ def test_print_accepts_null_customer_and_invoice_numbers(
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
 
     assert response.status_code == 202
     assert (tmp_path / "2025_12_01_1235_____invoice.pdf").exists()
@@ -185,9 +185,9 @@ def test_print_accepts_integer_customer_and_invoice_numbers(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -199,9 +199,9 @@ def test_print_accepts_integer_customer_and_invoice_numbers(
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
 
     assert response.status_code == 202
     assert (tmp_path / "2025_12_01_1235_123_456_invoice.pdf").exists()
@@ -227,9 +227,9 @@ def test_print_jobs_downloads_and_saves_all_pdfs(monkeypatch, tmp_path: Path) ->
         called_urls.append(url)
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print/jobs",
@@ -249,9 +249,9 @@ def test_print_jobs_downloads_and_saves_all_pdfs(monkeypatch, tmp_path: Path) ->
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
 
     assert response.status_code == 202
     assert response.json()["status"] == "accepted"
@@ -273,9 +273,9 @@ def test_print_jobs_accepts_null_customer_and_invoice_numbers(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print/jobs",
@@ -291,9 +291,9 @@ def test_print_jobs_accepts_null_customer_and_invoice_numbers(
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
 
     assert response.status_code == 202
     assert (tmp_path / "2025_12_01_1235_____envelope.pdf").exists()
@@ -307,9 +307,9 @@ def test_print_jobs_accepts_integer_customer_and_invoice_numbers(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print/jobs",
@@ -325,9 +325,9 @@ def test_print_jobs_accepts_integer_customer_and_invoice_numbers(
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
 
     assert response.status_code == 202
     assert (tmp_path / "2025_12_01_1235_111_2002_envelope.pdf").exists()
@@ -336,15 +336,15 @@ def test_print_jobs_accepts_integer_customer_and_invoice_numbers(
 def test_resolve_output_path_appends_counter_when_name_already_exists(
     monkeypatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     first_path = tmp_path / "2025_12_01_1235_123_456_invoice.pdf"
     first_path.write_bytes(b"existing")
 
-    from browserprint.api.routes import _resolve_output_path
+    from browserprint.api.download_service import resolve_output_path
 
-    resolved = _resolve_output_path("http://localhost:8000/test/invoice", "123", "456")
+    resolved = resolve_output_path("http://localhost:8000/test/invoice", "123", "456")
 
     assert resolved == tmp_path / "2025_12_01_1235_123_456_invoice_2.pdf"
 
@@ -362,12 +362,12 @@ def test_successful_download_triggers_sumatra_print(
     def fake_run_sumatra_print(sumatra_path, printer_command, output_path) -> None:
         print_calls.append((sumatra_path, printer_command, output_path))
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
-        "browserprint.api.routes.run_sumatra_print", fake_run_sumatra_print
+        "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
     )
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -379,10 +379,10 @@ def test_successful_download_triggers_sumatra_print(
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
-    _routes._PRINT_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
+    _job_queue.PRINT_QUEUE.join()
 
     assert response.status_code == 202
     assert len(print_calls) == 1
@@ -404,12 +404,12 @@ def test_download_failure_does_not_trigger_sumatra_print(
     def fake_run_sumatra_print(sumatra_path, printer_command, output_path) -> None:
         print_calls.append((sumatra_path, printer_command, output_path))
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
-        "browserprint.api.routes.run_sumatra_print", fake_run_sumatra_print
+        "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
     )
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -421,10 +421,10 @@ def test_download_failure_does_not_trigger_sumatra_print(
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
-    _routes._PRINT_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
+    _job_queue.PRINT_QUEUE.join()
 
     assert response.status_code == 202
     assert print_calls == []
@@ -443,12 +443,12 @@ def test_print_execution_error_is_caught_and_does_not_crash_worker(
     def fake_run_sumatra_print(sumatra_path, printer_command, output_path) -> None:
         raise PrintExecutionError("printer offline")
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
-        "browserprint.api.routes.run_sumatra_print", fake_run_sumatra_print
+        "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
     )
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -460,10 +460,10 @@ def test_print_execution_error_is_caught_and_does_not_crash_worker(
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
-    _routes._PRINT_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
+    _job_queue.PRINT_QUEUE.join()
 
     # Worker must survive — a second request still succeeds
     response2 = client.post(
@@ -475,8 +475,8 @@ def test_print_execution_error_is_caught_and_does_not_crash_worker(
             "invoiceNumber": "000",
         },
     )
-    _routes._DOWNLOAD_QUEUE.join()
-    _routes._PRINT_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
+    _job_queue.PRINT_QUEUE.join()
 
     assert response.status_code == 202
     assert response2.status_code == 202
@@ -493,12 +493,12 @@ def test_print_override_replaces_print_command(monkeypatch, tmp_path: Path) -> N
     def fake_run_sumatra_print(sumatra_path, printer_command, output_path) -> None:
         print_calls.append((printer_command, output_path))
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
-        "browserprint.api.routes.run_sumatra_print", fake_run_sumatra_print
+        "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
     )
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
     monkeypatch.setattr(
         "browserprint.api.routes._get_print_override", lambda: "Override Printer"
     )
@@ -513,10 +513,10 @@ def test_print_override_replaces_print_command(monkeypatch, tmp_path: Path) -> N
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
-    _routes._PRINT_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
+    _job_queue.PRINT_QUEUE.join()
 
     assert response.status_code == 202
     assert len(print_calls) == 1
@@ -536,12 +536,12 @@ def test_print_override_inactive_uses_original_command(
     def fake_run_sumatra_print(sumatra_path, printer_command, output_path) -> None:
         print_calls.append((printer_command, output_path))
 
-    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
-        "browserprint.api.routes.run_sumatra_print", fake_run_sumatra_print
+        "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
     )
-    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
     monkeypatch.setattr("browserprint.api.routes._get_print_override", lambda: None)
 
     response = client.post(
@@ -554,10 +554,10 @@ def test_print_override_inactive_uses_original_command(
         },
     )
 
-    from browserprint.api import routes as _routes
+    from browserprint.api import job_queue as _job_queue
 
-    _routes._DOWNLOAD_QUEUE.join()
-    _routes._PRINT_QUEUE.join()
+    _job_queue.DOWNLOAD_QUEUE.join()
+    _job_queue.PRINT_QUEUE.join()
 
     assert response.status_code == 202
     assert len(print_calls) == 1
