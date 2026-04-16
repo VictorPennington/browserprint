@@ -24,12 +24,16 @@ _DOWNLOAD_QUEUE: queue.Queue = queue.Queue()
 
 def _download_worker() -> None:
     while True:
-        request_id, pdf_url, printer_command = _DOWNLOAD_QUEUE.get()
+        request_id, pdf_url, printer_command, customer_number, invoice_number = (
+            _DOWNLOAD_QUEUE.get()
+        )
         try:
             _run_single_download_job(
                 request_id=request_id,
                 pdf_url=pdf_url,
                 printer_command=printer_command,
+                customer_number=customer_number,
+                invoice_number=invoice_number,
             )
         finally:
             _DOWNLOAD_QUEUE.task_done()
@@ -51,16 +55,26 @@ def _format_url_for_log(url: str) -> str:
     return path
 
 
-def _build_download_filename(pdf_url: str) -> str:
+def _build_download_filename(
+    pdf_url: str,
+    customer_number: str | int | None,
+    invoice_number: str | int | None,
+) -> str:
     parsed = urlparse(pdf_url)
     endpoint_name = Path(parsed.path).stem.strip() or "downloaded"
+    customer = str(customer_number).strip() if customer_number is not None else ""
+    invoice = str(invoice_number).strip() if invoice_number is not None else ""
+    customer = customer or "_"
+    invoice = invoice or "_"
     timestamp = datetime.now().strftime("%Y_%m_%d_%H%M")
-    return f"{timestamp}_{endpoint_name}.pdf"
+    return f"{timestamp}_{customer}_{invoice}_{endpoint_name}.pdf"
 
 
 class PrintRequest(BaseModel):
     pdfUrl: str = Field(min_length=1)
     printCommand: str = Field(min_length=1)
+    customerNumber: str | int | None = None
+    invoiceNumber: str | int | None = None
 
     @field_validator("pdfUrl")
     @classmethod
@@ -70,9 +84,19 @@ class PrintRequest(BaseModel):
             raise ValueError("pdfUrl must use http:// or https://")
         return value.strip()
 
+    @field_validator("printCommand")
+    @classmethod
+    def validate_required_text(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("field cannot be empty")
+        return normalized
+
 
 class PrintJobsRequest(BaseModel):
     jobs: list[PrintRequest] = Field(min_length=1)
+    customerNumber: str | int | None = None
+    invoiceNumber: str | int | None = None
 
 
 @router.get("/")
@@ -96,10 +120,20 @@ def options_print_jobs() -> dict:
 def print_document(request: PrintRequest) -> dict[str, str]:
     request_id = uuid4().hex
     logger.info(
-        "Request-> /print to: %s",
+        "Request-> /print to: %s, CustomerNumber=%s, InvoiceNumber=%s",
         _format_url_for_log(request.pdfUrl),
+        request.customerNumber,
+        request.invoiceNumber,
     )
-    _DOWNLOAD_QUEUE.put((request_id, request.pdfUrl, request.printCommand))
+    _DOWNLOAD_QUEUE.put(
+        (
+            request_id,
+            request.pdfUrl,
+            request.printCommand,
+            request.customerNumber,
+            request.invoiceNumber,
+        )
+    )
 
     return {
         "status": "accepted",
@@ -111,14 +145,32 @@ def print_document(request: PrintRequest) -> dict[str, str]:
 @router.post("/print/jobs", status_code=202)
 def print_document_jobs(request: PrintJobsRequest) -> dict[str, str]:
     request_id = uuid4().hex
+    customer_number = request.customerNumber
+    invoice_number = request.invoiceNumber
     logger.info(
-        "Request-> /print/jobs request_id=%s jobs_count=%s",
+        "Request-> /print/jobs request_id=%s Customer Number=%s, Invoice Number=%s",
         request_id,
-        len(request.jobs),
+        customer_number,
+        invoice_number,
     )
     for index, job in enumerate(request.jobs, start=1):
         job_request_id = f"{request_id}-{index}"
-        _DOWNLOAD_QUEUE.put((job_request_id, job.pdfUrl, job.printCommand))
+        logger.info(
+            "Request-> /print/jobs job_request_id=%s to: %s, Inv.Number: %s, CustomerNumber: %s",
+            job_request_id,
+            _format_url_for_log(job.pdfUrl),
+            invoice_number,
+            customer_number,
+        )
+        _DOWNLOAD_QUEUE.put(
+            (
+                job_request_id,
+                job.pdfUrl,
+                job.printCommand,
+                customer_number,
+                invoice_number,
+            )
+        )
 
     return {
         "status": "accepted",
@@ -129,11 +181,15 @@ def print_document_jobs(request: PrintJobsRequest) -> dict[str, str]:
 
 
 def _run_single_download_job(
-    request_id: str, pdf_url: str, printer_command: str
+    request_id: str,
+    pdf_url: str,
+    printer_command: str,
+    customer_number: str | int | None,
+    invoice_number: str | int | None,
 ) -> None:
     try:
         _DEBUG_OUTPUT_DIR.mkdir(exist_ok=True)
-        output_path = _resolve_output_path(pdf_url)
+        output_path = _resolve_output_path(pdf_url, customer_number, invoice_number)
         logger.info("download started for: \n     %s", _format_url_for_log(pdf_url))
         pdf_bytes = fetch_pdf(pdf_url)
         output_path.write_bytes(pdf_bytes)
@@ -150,8 +206,14 @@ def _run_single_download_job(
         logger.exception("download_unexpected_failure request_id=%s", request_id)
 
 
-def _resolve_output_path(pdf_url: str) -> Path:
-    output_path = _DEBUG_OUTPUT_DIR / _build_download_filename(pdf_url)
+def _resolve_output_path(
+    pdf_url: str,
+    customer_number: str | int | None,
+    invoice_number: str | int | None,
+) -> Path:
+    output_path = _DEBUG_OUTPUT_DIR / _build_download_filename(
+        pdf_url, customer_number, invoice_number
+    )
     if not output_path.exists():
         return output_path
 

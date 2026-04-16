@@ -33,6 +33,8 @@ def test_print_rejects_non_http_url() -> None:
         json={
             "pdfUrl": "file:///tmp/test.pdf",
             "printCommand": "MyPrinter",
+            "customerNumber": "CUST1",
+            "invoiceNumber": "INV1",
         },
     )
 
@@ -57,6 +59,8 @@ def test_print_downloads_and_saves_pdf(monkeypatch, tmp_path: Path) -> None:
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
             "printCommand": "ZDesigner GK420d",
+            "customerNumber": "123",
+            "invoiceNumber": "456",
         },
     )
 
@@ -68,7 +72,7 @@ def test_print_downloads_and_saves_pdf(monkeypatch, tmp_path: Path) -> None:
     assert response.json()["status"] == "accepted"
     assert response.json()["requestId"]
     assert called["url"] == "http://localhost:8000/test/invoice"
-    saved = tmp_path / "2025_12_01_1235_invoice.pdf"
+    saved = tmp_path / "2025_12_01_1235_123_456_invoice.pdf"
     assert saved.exists()
     assert saved.read_bytes().startswith(b"%PDF")
 
@@ -90,6 +94,8 @@ def test_print_download_errors_do_not_fail_http_ack(
         json={
             "pdfUrl": "http://localhost:8000/test.pdf",
             "printCommand": "MyPrinter",
+            "customerNumber": "123",
+            "invoiceNumber": "456",
         },
     )
 
@@ -99,6 +105,96 @@ def test_print_download_errors_do_not_fail_http_ack(
 
     assert response.status_code == 202
     assert response.json()["status"] == "accepted"
+
+
+def test_print_accepts_empty_customer_and_invoice_numbers(
+    monkeypatch, tmp_path: Path
+) -> None:
+    client = TestClient(create_app())
+
+    def fake_fetch_pdf(url: str) -> bytes:
+        return b"%PDF-fake-content"
+
+    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+
+    response = client.post(
+        "/print",
+        json={
+            "pdfUrl": "http://localhost:8000/test/invoice",
+            "printCommand": "MyPrinter",
+            "customerNumber": "",
+            "invoiceNumber": "",
+        },
+    )
+
+    from browserprint.api import routes as _routes
+
+    _routes._DOWNLOAD_QUEUE.join()
+
+    assert response.status_code == 202
+    assert (tmp_path / "2025_12_01_1235_____invoice.pdf").exists()
+
+
+def test_print_accepts_null_customer_and_invoice_numbers(
+    monkeypatch, tmp_path: Path
+) -> None:
+    client = TestClient(create_app())
+
+    def fake_fetch_pdf(url: str) -> bytes:
+        return b"%PDF-fake-content"
+
+    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+
+    response = client.post(
+        "/print",
+        json={
+            "pdfUrl": "http://localhost:8000/test/invoice",
+            "printCommand": "MyPrinter",
+            "customerNumber": None,
+            "invoiceNumber": None,
+        },
+    )
+
+    from browserprint.api import routes as _routes
+
+    _routes._DOWNLOAD_QUEUE.join()
+
+    assert response.status_code == 202
+    assert (tmp_path / "2025_12_01_1235_____invoice.pdf").exists()
+
+
+def test_print_accepts_integer_customer_and_invoice_numbers(
+    monkeypatch, tmp_path: Path
+) -> None:
+    client = TestClient(create_app())
+
+    def fake_fetch_pdf(url: str) -> bytes:
+        return b"%PDF-fake-content"
+
+    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+
+    response = client.post(
+        "/print",
+        json={
+            "pdfUrl": "http://localhost:8000/test/invoice",
+            "printCommand": "MyPrinter",
+            "customerNumber": 123,
+            "invoiceNumber": 456,
+        },
+    )
+
+    from browserprint.api import routes as _routes
+
+    _routes._DOWNLOAD_QUEUE.join()
+
+    assert response.status_code == 202
+    assert (tmp_path / "2025_12_01_1235_123_456_invoice.pdf").exists()
 
 
 def test_print_jobs_requires_non_empty_jobs_array() -> None:
@@ -128,6 +224,8 @@ def test_print_jobs_downloads_and_saves_all_pdfs(monkeypatch, tmp_path: Path) ->
     response = client.post(
         "/print/jobs",
         json={
+            "customerNumber": "111",
+            "invoiceNumber": "1001",
             "jobs": [
                 {
                     "pdfUrl": "http://localhost:8000/test/invoice-a",
@@ -137,7 +235,7 @@ def test_print_jobs_downloads_and_saves_all_pdfs(monkeypatch, tmp_path: Path) ->
                     "pdfUrl": "http://localhost:8000/test/invoice-b",
                     "printCommand": "Printer B",
                 },
-            ]
+            ],
         },
     )
 
@@ -153,8 +251,76 @@ def test_print_jobs_downloads_and_saves_all_pdfs(monkeypatch, tmp_path: Path) ->
         "http://localhost:8000/test/invoice-a",
         "http://localhost:8000/test/invoice-b",
     ]
-    assert (tmp_path / "2025_12_01_1235_invoice-a.pdf").exists()
-    assert (tmp_path / "2025_12_01_1235_invoice-b.pdf").exists()
+    assert (tmp_path / "2025_12_01_1235_111_1001_invoice-a.pdf").exists()
+    assert (tmp_path / "2025_12_01_1235_111_1001_invoice-b.pdf").exists()
+
+
+def test_print_jobs_accepts_null_customer_and_invoice_numbers(
+    monkeypatch, tmp_path: Path
+) -> None:
+    client = TestClient(create_app())
+
+    def fake_fetch_pdf(url: str) -> bytes:
+        return b"%PDF-fake-content"
+
+    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+
+    response = client.post(
+        "/print/jobs",
+        json={
+            "customerNumber": None,
+            "invoiceNumber": None,
+            "jobs": [
+                {
+                    "pdfUrl": "http://localhost:8000/test/envelope",
+                    "printCommand": "Printer A",
+                }
+            ],
+        },
+    )
+
+    from browserprint.api import routes as _routes
+
+    _routes._DOWNLOAD_QUEUE.join()
+
+    assert response.status_code == 202
+    assert (tmp_path / "2025_12_01_1235_____envelope.pdf").exists()
+
+
+def test_print_jobs_accepts_integer_customer_and_invoice_numbers(
+    monkeypatch, tmp_path: Path
+) -> None:
+    client = TestClient(create_app())
+
+    def fake_fetch_pdf(url: str) -> bytes:
+        return b"%PDF-fake-content"
+
+    monkeypatch.setattr("browserprint.api.routes.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
+
+    response = client.post(
+        "/print/jobs",
+        json={
+            "customerNumber": 111,
+            "invoiceNumber": 2002,
+            "jobs": [
+                {
+                    "pdfUrl": "http://localhost:8000/test/envelope",
+                    "printCommand": "Printer A",
+                }
+            ],
+        },
+    )
+
+    from browserprint.api import routes as _routes
+
+    _routes._DOWNLOAD_QUEUE.join()
+
+    assert response.status_code == 202
+    assert (tmp_path / "2025_12_01_1235_111_2002_envelope.pdf").exists()
 
 
 def test_resolve_output_path_appends_counter_when_name_already_exists(
@@ -163,11 +329,11 @@ def test_resolve_output_path_appends_counter_when_name_already_exists(
     monkeypatch.setattr("browserprint.api.routes._DEBUG_OUTPUT_DIR", tmp_path)
     monkeypatch.setattr("browserprint.api.routes.datetime", FrozenDateTime)
 
-    first_path = tmp_path / "2025_12_01_1235_invoice.pdf"
+    first_path = tmp_path / "2025_12_01_1235_123_456_invoice.pdf"
     first_path.write_bytes(b"existing")
 
     from browserprint.api.routes import _resolve_output_path
 
-    resolved = _resolve_output_path("http://localhost:8000/test/invoice")
+    resolved = _resolve_output_path("http://localhost:8000/test/invoice", "123", "456")
 
-    assert resolved == tmp_path / "2025_12_01_1235_invoice_2.pdf"
+    assert resolved == tmp_path / "2025_12_01_1235_123_456_invoice_2.pdf"
