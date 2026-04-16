@@ -15,6 +15,7 @@ from browserprint.ui.download_pdf import DownloadPdfController
 from browserprint.ui.log_panel import LogPanel
 from browserprint.ui.logging import install_app_log_handler
 from browserprint.ui.make_request import MakeRequestController
+from browserprint.ui.print_override import PrintOverridePanel
 
 
 class BrowserPrint(toga.App):
@@ -30,6 +31,13 @@ class BrowserPrint(toga.App):
 
         self.log_panel = LogPanel()
         main_box.add(self.log_panel.widget)
+
+        self.print_override_panel = PrintOverridePanel()
+        main_box.add(self.print_override_panel.widget)
+
+        from browserprint.api import routes as _routes
+
+        _routes.set_print_override_provider(self.print_override_panel.get_override)
 
         self.auth_controller = AuthSettingsController(
             app=self,
