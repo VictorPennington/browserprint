@@ -118,4 +118,14 @@ MANUAL_REQUEST_TIMEOUT_SECONDS = _get_env_int(
 
 DOWNLOAD_TIMEOUT_SECONDS = _get_env_int("BROWSERPRINT_DOWNLOAD_TIMEOUT_SECONDS", 20)
 MAX_PDF_BYTES = _get_env_int("BROWSERPRINT_MAX_PDF_BYTES", 10 * 1024 * 1024)
+
+
+def _get_env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes")
+
+
+START_MINIMIZED = _get_env_bool("BROWSERPRINT_START_MINIMIZED", False)
 LARAVEL_AUTH_HEADER = _get_env_str("BROWSERPRINT_LARAVEL_AUTH_HEADER", "Authorization")

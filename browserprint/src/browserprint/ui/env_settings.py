@@ -30,6 +30,7 @@ _MANAGED_KEYS = {
     "BROWSERPRINT_SANCTUM_TIMEOUT_SECONDS",
     "BROWSERPRINT_MANUAL_REQUEST_TIMEOUT_SECONDS",
     "BROWSERPRINT_DOWNLOAD_TIMEOUT_SECONDS",
+    "BROWSERPRINT_START_MINIMIZED",
 }
 
 
@@ -96,6 +97,7 @@ class EnvSettingsController:
         self._sanctum_timeout_input: toga.TextInput | None = None
         self._manual_timeout_input: toga.TextInput | None = None
         self._download_timeout_input: toga.TextInput | None = None
+        self._start_minimized_switch: toga.Switch | None = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -246,6 +248,28 @@ class EnvSettingsController:
         )
         panel.add(section_timeouts)
 
+        # ── Startup section ────────────────────────────────────────────
+        panel.add(toga.Label("Startup", style=Pack(font_weight="bold", padding_top=10)))
+        panel.add(toga.Divider(style=Pack(padding_bottom=4)))
+
+        section_startup = toga.Box(style=Pack(direction=COLUMN, padding_left=12, gap=2))
+        start_minimized_env = self._env.get("BROWSERPRINT_START_MINIMIZED", "")
+        start_minimized_value = start_minimized_env.lower() in ("1", "true", "yes")
+        self._start_minimized_switch = toga.Switch(
+            text="",
+            value=start_minimized_value
+            if start_minimized_env
+            else _settings.START_MINIMIZED,
+        )
+        section_startup.add(
+            self._field_row(
+                "Start Minimized",
+                self._start_minimized_switch,
+                hint="minimize to tray on launch",
+            )
+        )
+        panel.add(section_startup)
+
         # ── Save button + status label ─────────────────────────────────
         panel.add(toga.Box(style=Pack(flex=1)))  # spacer
 
@@ -302,9 +326,14 @@ class EnvSettingsController:
             "BROWSERPRINT_SANCTUM_TIMEOUT_SECONDS": self._sanctum_timeout_input.value.strip(),
             "BROWSERPRINT_MANUAL_REQUEST_TIMEOUT_SECONDS": self._manual_timeout_input.value.strip(),
             "BROWSERPRINT_DOWNLOAD_TIMEOUT_SECONDS": self._download_timeout_input.value.strip(),
+            "BROWSERPRINT_START_MINIMIZED": "true"
+            if self._start_minimized_switch.value
+            else "false",
         }
         # Remove blank values to avoid overwriting with empty strings.
-        overrides = {k: v for k, v in overrides.items() if v}
+        # Boolean-style keys ("true"/"false") are always kept.
+        _boolean_keys = {"BROWSERPRINT_START_MINIMIZED"}
+        overrides = {k: v for k, v in overrides.items() if v or k in _boolean_keys}
 
         try:
             _write_env_file(_ENV_PATH, overrides)

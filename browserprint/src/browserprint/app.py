@@ -9,7 +9,7 @@ from toga.constants import COLUMN
 from toga.style import Pack
 
 from browserprint.api.server import run_local_server
-from browserprint.settings import LOCAL_API_HOST, LOCAL_API_PORT
+from browserprint.settings import LOCAL_API_HOST, LOCAL_API_PORT, START_MINIMIZED
 from browserprint.ui.auth_settings import AuthSettingsController
 from browserprint.ui.download_pdf import DownloadPdfController
 from browserprint.ui.env_settings import EnvSettingsController
@@ -115,7 +115,45 @@ class BrowserPrint(toga.App):
             title=self.formal_name, size=(800, 600), position=(0, 0)
         )
         self.main_window.content = self._main_content
+        self.main_window.on_close = self._on_main_window_close
+
+        self._setup_tray()
+
+        if START_MINIMIZED:
+            self.main_window.hide()
+        else:
+            self.main_window.show()
+
+    def _setup_tray(self) -> None:
+        """Create a system-tray menu icon for show/hide and exit."""
+        self._tray_icon = toga.MenuStatusIcon(
+            text=self.formal_name,
+        )
+
+        show_cmd = toga.Command(
+            self._on_tray_show,
+            text="Show BrowserPrint",
+            group=self._tray_icon,
+        )
+        exit_cmd = toga.Command(
+            self._on_tray_exit,
+            text="Exit",
+            group=self._tray_icon,
+        )
+
+        self.status_icons.add(self._tray_icon)
+        self.status_icons.commands.add(show_cmd, exit_cmd)
+
+    def _on_tray_show(self, widget=None, **kwargs) -> None:
         self.main_window.show()
+
+    def _on_tray_exit(self, widget=None, **kwargs) -> None:
+        self.request_exit()
+
+    def _on_main_window_close(self, window, **kwargs) -> bool:
+        """Minimize to tray instead of exiting when the window is closed."""
+        self.main_window.hide()
+        return False
 
     def _show_main_tab(self) -> None:
         self._commands_container.current_tab = self._commands_container.content[0]
