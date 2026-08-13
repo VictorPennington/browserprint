@@ -10,7 +10,7 @@ from browserprint.settings import DEBUG_OUTPUT_DIR
 
 
 class PrintOverridePanel:
-    """Checkbox + text input that optionally overrides the printCommand for every job."""
+    """Checkbox + text input that optionally overrides the printerCommand for every job."""
 
     def __init__(self) -> None:
         self._disable_print_switch = toga.Switch(

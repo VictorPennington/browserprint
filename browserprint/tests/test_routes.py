@@ -42,7 +42,7 @@ def test_print_rejects_non_http_url() -> None:
         "/print",
         json={
             "pdfUrl": "file:///tmp/test.pdf",
-            "printCommand": "MyPrinter",
+            "printerCommand": "MyPrinter",
             "customerNumber": "CUST1",
             "invoiceNumber": "INV1",
         },
@@ -68,7 +68,7 @@ def test_print_downloads_and_saves_pdf(monkeypatch, tmp_path: Path) -> None:
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
-            "printCommand": "ZDesigner GK420d",
+            "printerCommand": "ZDesigner GK420d",
             "customerNumber": "123",
             "invoiceNumber": "456",
         },
@@ -103,7 +103,7 @@ def test_print_download_errors_do_not_fail_http_ack(
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test.pdf",
-            "printCommand": "MyPrinter",
+            "printerCommand": "MyPrinter",
             "customerNumber": "123",
             "invoiceNumber": "456",
         },
@@ -133,7 +133,7 @@ def test_print_accepts_empty_customer_and_invoice_numbers(
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
-            "printCommand": "MyPrinter",
+            "printerCommand": "MyPrinter",
             "customerNumber": "",
             "invoiceNumber": "",
         },
@@ -163,7 +163,7 @@ def test_print_accepts_null_customer_and_invoice_numbers(
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
-            "printCommand": "MyPrinter",
+            "printerCommand": "MyPrinter",
             "customerNumber": None,
             "invoiceNumber": None,
         },
@@ -193,7 +193,7 @@ def test_print_accepts_integer_customer_and_invoice_numbers(
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
-            "printCommand": "MyPrinter",
+            "printerCommand": "MyPrinter",
             "customerNumber": 123,
             "invoiceNumber": 456,
         },
@@ -239,11 +239,11 @@ def test_print_jobs_downloads_and_saves_all_pdfs(monkeypatch, tmp_path: Path) ->
             "jobs": [
                 {
                     "pdfUrl": "http://localhost:8000/test/invoice-a",
-                    "printCommand": "Printer A",
+                    "printerCommand": "Printer A",
                 },
                 {
                     "pdfUrl": "http://localhost:8000/test/invoice-b",
-                    "printCommand": "Printer B",
+                    "printerCommand": "Printer B",
                 },
             ],
         },
@@ -285,7 +285,7 @@ def test_print_jobs_accepts_null_customer_and_invoice_numbers(
             "jobs": [
                 {
                     "pdfUrl": "http://localhost:8000/test/envelope",
-                    "printCommand": "Printer A",
+                    "printerCommand": "Printer A",
                 }
             ],
         },
@@ -319,7 +319,7 @@ def test_print_jobs_accepts_integer_customer_and_invoice_numbers(
             "jobs": [
                 {
                     "pdfUrl": "http://localhost:8000/test/envelope",
-                    "printCommand": "Printer A",
+                    "printerCommand": "Printer A",
                 }
             ],
         },
@@ -373,7 +373,7 @@ def test_successful_download_triggers_sumatra_print(
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
-            "printCommand": "ZDesigner GK420d",
+            "printerCommand": "ZDesigner GK420d",
             "customerNumber": "123",
             "invoiceNumber": "456",
         },
@@ -415,7 +415,7 @@ def test_download_failure_does_not_trigger_sumatra_print(
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
-            "printCommand": "ZDesigner GK420d",
+            "printerCommand": "ZDesigner GK420d",
             "customerNumber": "123",
             "invoiceNumber": "456",
         },
@@ -454,7 +454,7 @@ def test_print_execution_error_is_caught_and_does_not_crash_worker(
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
-            "printCommand": "ZDesigner GK420d",
+            "printerCommand": "ZDesigner GK420d",
             "customerNumber": "123",
             "invoiceNumber": "456",
         },
@@ -470,7 +470,7 @@ def test_print_execution_error_is_caught_and_does_not_crash_worker(
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
-            "printCommand": "ZDesigner GK420d",
+            "printerCommand": "ZDesigner GK420d",
             "customerNumber": "789",
             "invoiceNumber": "000",
         },
@@ -507,7 +507,7 @@ def test_print_override_replaces_print_command(monkeypatch, tmp_path: Path) -> N
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
-            "printCommand": "Original Printer",
+            "printerCommand": "Original Printer",
             "customerNumber": "1",
             "invoiceNumber": "2",
         },
@@ -548,7 +548,7 @@ def test_print_override_inactive_uses_original_command(
         "/print",
         json={
             "pdfUrl": "http://localhost:8000/test/invoice",
-            "printCommand": "Original Printer",
+            "printerCommand": "Original Printer",
             "customerNumber": "1",
             "invoiceNumber": "2",
         },

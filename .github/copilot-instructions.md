@@ -17,12 +17,12 @@ BrowserPrint is a local desktop companion app (BeeWare/Toga) that exposes a loca
 - Local API host/port defaults to `127.0.0.1:8003` (overridable with env vars).
 - Exposed endpoints:
 	- `GET /` returns a simple health-style payload.
-	- `POST /print` validates one `{ pdfUrl, printCommand }` payload, enqueues it, and returns HTTP `202` with `requestId`.
+	- `POST /print` validates one `{ pdfUrl, printerCommand }` payload, enqueues it, and returns HTTP `202` with `requestId`.
 	- `POST /print/jobs` validates a non-empty `jobs` array, enqueues each item, and returns HTTP `202` with batch `requestId` and `acceptedJobs`.
 	- `OPTIONS /print` and `OPTIONS /print/jobs` are present for CORS preflight handling.
 - Request acceptance is asynchronous: HTTP `202` only confirms validation and queueing, not successful download or print completion.
 - `pdfUrl` must be `http://` or `https://`.
-- `printCommand` is required by schema; it is passed through the download pipeline and executed via SumatraPDF in the print worker unless printing is disabled by the UI switch.
+- `printerCommand` is required by schema; it is passed through the download pipeline and executed via SumatraPDF in the print worker unless printing is disabled by the UI switch.
 - The `PrintOverridePanel` can substitute a different printer name for all incoming jobs, or suppress printing entirely (download-only mode).
 
 ## Auth, Download, and Configuration

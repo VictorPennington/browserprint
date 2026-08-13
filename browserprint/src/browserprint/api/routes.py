@@ -19,7 +19,7 @@ def _get_print_override() -> str | None:
 
 
 def set_print_override_provider(fn: Callable[[], str | None]) -> None:
-    """Register a callable that returns an override printCommand or None."""
+    """Register a callable that returns an override printerCommand or None."""
     global _get_print_override
     _get_print_override = fn
 
@@ -44,16 +44,18 @@ def options_print_jobs() -> dict:
 @router.post("/print", status_code=202)
 def print_document(request: PrintRequest) -> dict[str, str]:
     request_id = uuid4().hex
-    effective_command = _get_print_override() or request.printCommand
+    effective_command = _get_print_override() or request.printerCommand
     logger.info(
         "Request-> /print to: %s, CustomerNumber=%s, InvoiceNumber=%s",
         format_url_for_log(request.pdfUrl),
         request.customerNumber,
         request.invoiceNumber,
     )
-    if effective_command != request.printCommand:
+    if effective_command != request.printerCommand:
         logger.info(
-            "printCommand overridden: %r -> %r", request.printCommand, effective_command
+            "printerCommand overridden: %r -> %r",
+            request.printerCommand,
+            effective_command,
         )
     DOWNLOAD_QUEUE.put(
         (
@@ -86,7 +88,7 @@ def print_document_jobs(request: PrintJobsRequest) -> dict[str, str]:
     override_command = _get_print_override()
     for index, job in enumerate(request.jobs, start=1):
         job_request_id = f"{request_id}-{index}"
-        effective_command = override_command or job.printCommand
+        effective_command = override_command or job.printerCommand
         logger.info(
             "Request-> /print/jobs job_request_id=%s to: %s, Inv.Number: %s, CustomerNumber: %s",
             job_request_id,
@@ -94,9 +96,11 @@ def print_document_jobs(request: PrintJobsRequest) -> dict[str, str]:
             invoice_number,
             customer_number,
         )
-        if effective_command != job.printCommand:
+        if effective_command != job.printerCommand:
             logger.info(
-                "printCommand overridden: %r -> %r", job.printCommand, effective_command
+                "printerCommand overridden: %r -> %r",
+                job.printerCommand,
+                effective_command,
             )
         DOWNLOAD_QUEUE.put(
             (

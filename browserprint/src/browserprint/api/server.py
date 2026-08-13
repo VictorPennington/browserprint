@@ -1,11 +1,14 @@
 """FastAPI server setup for local machine requests."""
 
+import json
 import logging
 import time
 
 import uvicorn
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from browserprint.settings import ALLOWED_ORIGINS, LOCAL_API_HOST, LOCAL_API_PORT
 
@@ -22,6 +25,22 @@ def create_app() -> FastAPI:
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "X-CSRF-TOKEN"],
     )
+
+    @api.exception_handler(RequestValidationError)
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ):
+        """Log detailed validation errors."""
+        logger.error(
+            "Validation error on %s %s: %s",
+            request.method,
+            request.url.path,
+            json.dumps(exc.errors(), indent=2),
+        )
+        return JSONResponse(
+            status_code=422,
+            content={"detail": exc.errors()},
+        )
 
     @api.middleware("http")
     async def log_requests(request: Request, call_next):

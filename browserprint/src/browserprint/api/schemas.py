@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class PrintRequest(BaseModel):
     pdfUrl: str = Field(min_length=1)
-    printCommand: str = Field(min_length=1)
+    printerCommand: str = Field(min_length=1)
     customerNumber: str | int | None = None
     invoiceNumber: str | int | None = None
 
@@ -17,7 +17,7 @@ class PrintRequest(BaseModel):
             raise ValueError("pdfUrl must use http:// or https://")
         return value.strip()
 
-    @field_validator("printCommand")
+    @field_validator("printerCommand")
     @classmethod
     def validate_required_text(cls, value: str) -> str:
         normalized = value.strip()
