@@ -26,20 +26,35 @@ def create_app() -> FastAPI:
         allow_headers=["Content-Type", "Authorization", "X-CSRF-TOKEN"],
     )
 
+    def _serialize_error(error: dict) -> dict:
+        """Convert error dict to JSON-serializable format."""
+        result = {}
+        for key, value in error.items():
+            if key == "ctx" and isinstance(value, dict):
+                # Convert ctx values to strings if they're exceptions
+                result[key] = {
+                    k: str(v) if isinstance(v, Exception) else v
+                    for k, v in value.items()
+                }
+            else:
+                result[key] = str(value) if isinstance(value, Exception) else value
+        return result
+
     @api.exception_handler(RequestValidationError)
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
     ):
         """Log detailed validation errors."""
+        errors = [_serialize_error(err) for err in exc.errors()]
         logger.error(
             "Validation error on %s %s: %s",
             request.method,
             request.url.path,
-            json.dumps(exc.errors(), indent=2),
+            json.dumps(errors, indent=2),
         )
         return JSONResponse(
             status_code=422,
-            content={"detail": exc.errors()},
+            content={"detail": errors},
         )
 
     @api.middleware("http")
