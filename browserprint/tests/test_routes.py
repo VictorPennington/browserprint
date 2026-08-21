@@ -14,11 +14,11 @@ class FrozenDateTime:
 
 
 @pytest.fixture(autouse=True)
-def _noop_sumatra_print(monkeypatch) -> None:
-    """Prevent real Sumatra invocations in tests that don't care about printing."""
+def _noop_pdftoprinter_print(monkeypatch) -> None:
+    """Prevent real PDFtoPrinter invocations in tests that don't care about printing."""
     monkeypatch.setattr(
-        "browserprint.api.job_queue.run_sumatra_print",
-        lambda sumatra_path, printer_command, output_path: None,
+        "browserprint.api.job_queue.run_pdftoprinter_print",
+        lambda pdftoprinter_path, printer_command, output_path: None,
     )
 
 
@@ -382,7 +382,7 @@ def test_successful_download_triggers_sumatra_print(
 
     monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
-        "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
+        "browserprint.api.job_queue.run_pdftoprinter_print", fake_run_sumatra_print
     )
     monkeypatch.setattr(
         "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
@@ -426,7 +426,7 @@ def test_download_failure_does_not_trigger_sumatra_print(
 
     monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
-        "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
+        "browserprint.api.job_queue.run_pdftoprinter_print", fake_run_sumatra_print
     )
     monkeypatch.setattr(
         "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
@@ -467,7 +467,7 @@ def test_print_execution_error_is_caught_and_does_not_crash_worker(
 
     monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
-        "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
+        "browserprint.api.job_queue.run_pdftoprinter_print", fake_run_sumatra_print
     )
     monkeypatch.setattr(
         "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
@@ -519,7 +519,7 @@ def test_print_override_replaces_print_command(monkeypatch, tmp_path: Path) -> N
 
     monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
-        "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
+        "browserprint.api.job_queue.run_pdftoprinter_print", fake_run_sumatra_print
     )
     monkeypatch.setattr(
         "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
@@ -564,7 +564,7 @@ def test_print_override_inactive_uses_original_command(
 
     monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
-        "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
+        "browserprint.api.job_queue.run_pdftoprinter_print", fake_run_sumatra_print
     )
     monkeypatch.setattr(
         "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path

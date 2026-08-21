@@ -4,17 +4,18 @@ import logging
 import queue
 import threading
 
-from browserprint.settings import SUMATRA_PATH
+from browserprint.settings import PDFTOPRINTER_PATH
 
 from .downloads.service import run_download_job
-from .prints.executor import PrintExecutionError, run_sumatra_print
+from .prints.executor import PrintExecutionError
+from .prints.pdftoprinter_executor import run_pdftoprinter_print
 
 logger = logging.getLogger("browserprint.api.job_queue")
 
 DOWNLOAD_QUEUE: queue.Queue = queue.Queue()
 PRINT_QUEUE: queue.Queue = queue.Queue()
 
-_SUMATRA_PDF_PATH = SUMATRA_PATH
+_PDFTOPRINTER_PATH = PDFTOPRINTER_PATH
 
 
 def _download_worker() -> None:
@@ -39,7 +40,7 @@ def _print_worker() -> None:
     while True:
         request_id, output_path, printer_command = PRINT_QUEUE.get()
         try:
-            run_sumatra_print(_SUMATRA_PDF_PATH, printer_command, output_path)
+            run_pdftoprinter_print(_PDFTOPRINTER_PATH, printer_command, output_path)
             logger.info(
                 "Print successful! request_id=%s file=%s",
                 request_id,

@@ -6,7 +6,7 @@ BrowserPrint is a **local desktop companion app** (BeeWare/Toga) that exposes a 
 
 ### Core Flow
 ```
-Browser/System → Local API (127.0.0.1:8003) → Download PDF → Save to Disk → SumatraPDF Silent Print
+Browser/System → Local API (127.0.0.1:8003) → Download PDF → Save to Disk → PDFtoPrinter Silent Print
 ```
 
 ### Key Capabilities
@@ -35,7 +35,7 @@ Browser/System → Local API (127.0.0.1:8003) → Download PDF → Save to Disk 
 
 3. **Background Workers Start** (via `job_queue.py` import)
    - `_download_worker_thread`: Consumes `DOWNLOAD_QUEUE`, fetches PDFs, enqueues to `PRINT_QUEUE`
-   - `_print_worker_thread`: Consumes `PRINT_QUEUE`, executes SumatraPDF silently
+   - `_print_worker_thread`: Consumes `PRINT_QUEUE`, executes PDFtoPrinter silently
 
 4. **FastAPI Server Starts** (daemon thread)
    - Runs on `127.0.0.1:8003` (configurable via env vars)
@@ -79,7 +79,7 @@ Browser/System → Local API (127.0.0.1:8003) → Download PDF → Save to Disk 
     - Calls `run_download_job()` to fetch and save PDF
     - If printing not disabled, enqueues to `PRINT_QUEUE`
   - `_print_worker()`: Infinite loop consuming `PRINT_QUEUE`
-    - Calls `run_sumatra_print()` to execute silent print
+    - Calls `run_pdftoprinter_print()` to execute silent print
 - **Thread Lifecycle**: Both workers are daemon threads started at module import
 
 #### `download_service.py`
@@ -107,15 +107,28 @@ Browser/System → Local API (127.0.0.1:8003) → Download PDF → Save to Disk 
 - **Key Function**: `fetch_pdf(url, token?)` → returns PDF bytes
 
 #### `print_executor.py`
-- **Purpose**: SumatraPDF command execution
+- **Purpose**: SumatraPDF command execution (legacy — retained for reference, no longer called by the worker)
 - **Key Functions**:
   - `_parse_printer_command()`: Parses `printerCommand` string into argument list
     - Uses `shlex.split()` for proper shell-like parsing
     - Strips trailing `.pdf` filenames if present
+    - **Shared** with `pdftoprinter_executor.py`
   - `run_sumatra_print(sumatra_path, printer_command, output_path)`: Executes Sumatra
     - Builds command: `[sumatra.exe, "-print-to", <parsed_args...>, <output_path>]`
     - Runs via `subprocess.run()` with `shell=False`
     - Raises `PrintExecutionError` on failure
+
+#### `pdftoprinter_executor.py`
+- **Purpose**: PDFtoPrinter (pdftoprinter-c) command execution — **active print backend**
+- **Key Functions**:
+  - `run_pdftoprinter_print(pdftoprinter_path, printer_command, output_path)`: Executes PDFtoPrinter
+    - Reuses `_parse_printer_command()` from `print_executor.py`
+    - Joins parsed printer tokens into a **single** argument (extra positionals would be read as more PDF files)
+    - Builds command: `[PDFtoPrinter.exe, <output_path>, "<printer name>", "/s", "/no-autotray"]`
+    - `/s` = silent, `/no-autotray` = don't pause on a missing paper size (unattended printing)
+    - Runs via `subprocess.run()` with `shell=False`
+    - Raises `PrintExecutionError` on failure
+- **Vendor binaries**: `resources/vendor/pdftoprinter/PDFtoPrinter.exe` + `pdfium.dll` (DLL must sit beside the EXE)
 
 #### `schemas.py`
 - **Purpose**: Pydantic request validation models
@@ -233,7 +246,8 @@ All configurable via environment variables:
 |---------|---------|---------|
 | API Host | `BROWSERPRINT_LOCAL_API_HOST` | `127.0.0.1` |
 | API Port | `BROWSERPRINT_LOCAL_API_PORT` | `8003` |
-| SumatraPDF Path | `BROWSERPRINT_SUMATRA_PATH` | `<bundled>/SumatraPDF-3.6-64.exe` |
+| PDFtoPrinter Path | `BROWSERPRINT_PDFTOPRINTER_PATH` | `<bundled>/pdftoprinter/PDFtoPrinter.exe` |
+| SumatraPDF Path (legacy) | `BROWSERPRINT_SUMATRA_PATH` | `<bundled>/SumatraPDF-3.6-64.exe` |
 | Debug Output Dir | `BROWSERPRINT_DEBUG_OUTPUT_DIR` | `~/Desktop/debug_pdfs` |
 | Config Dir | `BROWSERPRINT_CONFIG_DIR` | `~/.browserprint` |
 | Config File | `BROWSERPRINT_CONFIG_FILE` | `auth_config.json` |
@@ -281,12 +295,12 @@ POST http://127.0.0.1:8003/print
      - If **disabled**: Logs success, stops here
      - If **enabled**: Enqueues to `PRINT_QUEUE`: `(request_id, output_path, printer_command)`
 
-### 4. Print Worker (`job_queue.py` → `print_executor.py`)
+### 4. Print Worker (`job_queue.py` → `pdftoprinter_executor.py`)
 - Consumes from `PRINT_QUEUE` in infinite loop
-- Calls `run_sumatra_print()`:
-  1. Verifies SumatraPDF executable exists
-  2. Parses `printer_command` into argument list
-  3. Builds command: `[sumatra.exe, "-print-to", "ZDesigner", "GK420d", "<output_path>"]`
+- Calls `run_pdftoprinter_print()`:
+  1. Verifies PDFtoPrinter executable exists
+  2. Parses `printer_command` and joins tokens into a single printer-name argument
+  3. Builds command: `[PDFtoPrinter.exe, "<output_path>", "ZDesigner GK420d", "/s", "/no-autotray"]`
   4. Executes via `subprocess.run()` with `shell=False`
   5. Logs success or raises `PrintExecutionError` on failure
 
@@ -356,7 +370,35 @@ POST http://127.0.0.1:8003/print
 - **Local-only**: API binds to `127.0.0.1` by design (no external access)
 - **Async acknowledgment**: HTTP `202` confirms queueing, not completion
 - **Single-instance**: No built-in multi-instance support
-- **Windows-focused**: SumatraPDF is Windows-specific (path configurable)
+- **Windows-focused**: PDFtoPrinter (and legacy SumatraPDF) are Windows-specific (paths configurable)
+
+---
+
+## Change Log
+
+### 2026-08-21 — Switched print backend from SumatraPDF to PDFtoPrinter (pdftoprinter-c)
+
+**Goal**: Replace SumatraPDF with [pdftoprinter-c](https://github.com/emendelson/pdftoprinter-c) as the print engine, for testing.
+
+**Actions taken**:
+1. **Security review** (subagent, static source review of `pdftoprinter.c`, `build.bat`, manifest, `app.rc`):
+   - Verdict: *safe with caveats* — no network code, no shell/process execution (no command-injection surface), no telemetry, runs as `asInvoker`, ASLR/DEP enabled.
+   - Caveats: release binaries are author-built (not reproducible from source); `pdfium.dll` is an implicit import → keep the vendor folder non-writable by others (DLL sideloading); build script downloads PDFium without checksum verification (only relevant if rebuilding).
+2. **Vendored binaries**: `PDFtoPrinter.exe` + `pdfium.dll` placed in `resources/vendor/pdftoprinter/` (DLL must sit beside the EXE).
+3. **New executor**: `api/prints/pdftoprinter_executor.py` with `run_pdftoprinter_print()`:
+   - Reuses `PrintExecutionError` and `_parse_printer_command()` from `executor.py`.
+   - Command: `[PDFtoPrinter.exe, <pdf>, "<printer name>", "/s", "/no-autotray"]` — printer name joined into one argument (extra positionals would be parsed as more PDF files).
+4. **Wiring**:
+   - `settings.py`: added `PDFTOPRINTER_PATH` (env `BROWSERPRINT_PDFTOPRINTER_PATH`, default `<bundled>/pdftoprinter/PDFtoPrinter.exe`).
+   - `job_queue.py`: `_print_worker()` now calls `run_pdftoprinter_print()` instead of `run_sumatra_print()`.
+   - `api/prints/__init__.py`: docstring updated.
+5. **Tests**:
+   - New `tests/test_pdftoprinter_executor.py` (4 tests: command shape, unquoted-name joining, failure, missing exe).
+   - `tests/test_routes.py`: all monkeypatch targets updated from `job_queue.run_sumatra_print` → `job_queue.run_pdftoprinter_print`.
+   - Full suite: **63 passed**.
+6. **Legacy kept**: `api/prints/executor.py` (Sumatra) and `SUMATRA_PATH` setting remain in place but are no longer called by the worker — easy to revert if needed.
+
+**To revert**: point `_print_worker()` back to `run_sumatra_print(_SUMATRA_PDF_PATH, ...)` and restore the `SUMATRA_PATH` import in `job_queue.py`.
 
 ---
 
@@ -370,7 +412,8 @@ POST http://127.0.0.1:8003/print
 | `api/job_queue.py` | Background worker threads, queues |
 | `api/download_service.py` | Download pipeline logic |
 | `api/pdf_fetcher.py` | Authenticated PDF downloading |
-| `api/print_executor.py` | SumatraPDF command execution |
+| `api/prints/pdftoprinter_executor.py` | PDFtoPrinter command execution (active backend) |
+| `api/prints/executor.py` | SumatraPDF command execution (legacy) |
 | `api/schemas.py` | Pydantic request validation |
 | `api/sanctum_client.py` | Laravel Sanctum token lifecycle |
 | `api/manual_request_client.py` | Manual HTTP request testing |

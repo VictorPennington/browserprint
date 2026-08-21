@@ -1,1 +1,1 @@
-"""Print pipeline: SumatraPDF command execution."""
+"""Print pipeline: PDFtoPrinter (pdftoprinter-c) command execution."""

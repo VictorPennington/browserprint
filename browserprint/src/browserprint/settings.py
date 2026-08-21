@@ -111,6 +111,15 @@ SUMATRA_PATH = _get_env_path(
     / "SumatraPDF-3.6-64.exe",
 )
 
+PDFTOPRINTER_PATH = _get_env_path(
+    "BROWSERPRINT_PDFTOPRINTER_PATH",
+    Path(__file__).resolve().parent
+    / "resources"
+    / "vendor"
+    / "pdftoprinter"
+    / "PDFtoPrinter.exe",
+)
+
 SANCTUM_TIMEOUT_SECONDS = _get_env_int("BROWSERPRINT_SANCTUM_TIMEOUT_SECONDS", 15)
 MANUAL_REQUEST_TIMEOUT_SECONDS = _get_env_int(
     "BROWSERPRINT_MANUAL_REQUEST_TIMEOUT_SECONDS", 20
