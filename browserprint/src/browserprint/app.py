@@ -5,7 +5,7 @@ Manage requests from browser to printer without dialog boxes
 import threading
 
 import toga
-from toga.constants import COLUMN
+from toga.constants import COLUMN, ROW
 from toga.style import Pack
 
 from browserprint.api.server import run_local_server
@@ -28,7 +28,18 @@ class BrowserPrint(toga.App):
         show the main window.
         """
         main_box = toga.Box(style=Pack(direction=COLUMN, margin=10, flex=1))
-        main_box.add(toga.Label("Application logs", style=Pack(margin_bottom=6)))
+
+        # Header row with "Application logs" label and "Clear Logs" button
+        header_box = toga.Box(
+            style=Pack(direction=ROW, align_items="center", margin_bottom=6)
+        )
+        header_box.add(toga.Label("Application logs", style=Pack(flex=1)))
+        clear_button = toga.Button(
+            "Clear Logs",
+            on_press=self._on_clear_logs,
+        )
+        header_box.add(clear_button)
+        main_box.add(header_box)
 
         self.log_panel = LogPanel()
         main_box.add(self.log_panel.widget)
@@ -148,6 +159,10 @@ class BrowserPrint(toga.App):
 
     def _emit_log_line(self, line: str) -> None:
         self.loop.call_soon_threadsafe(self.log_panel.append_line, line)
+
+    def _on_clear_logs(self, widget: toga.Button = None, **kwargs) -> None:
+        """Clear all logs from the log panel."""
+        self.log_panel.clear_logs()
 
 
 def main():

@@ -2,7 +2,7 @@
 [tool.briefcase]
 project_name = "Browser Print"
 bundle = "uk.co.wisehill"
-version = "0.0.1"
+version = "0.0.2"
 url = "http://wisehill.co.uk/projects/browserprint"
 license.file = "LICENSE"
 author = "VictorPennington"

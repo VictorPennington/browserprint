@@ -24,3 +24,8 @@ class LogPanel:
             self._lines = self._lines[: self._max_lines]
         self.widget.value = "\n".join(self._lines)
         self.widget.scroll_to_top()
+
+    def clear_logs(self) -> None:
+        """Clear all log entries from the panel."""
+        self._lines.clear()
+        self.widget.value = ""
