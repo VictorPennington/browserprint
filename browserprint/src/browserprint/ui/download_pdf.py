@@ -13,7 +13,7 @@ import toga
 from toga.constants import BOLD, COLUMN, ROW
 from toga.style import Pack
 
-from browserprint.api.pdf_fetcher import PDFDownloadError, fetch_pdf
+from browserprint.api.downloads.fetcher import PDFDownloadError, fetch_pdf
 from browserprint.auth_config import AuthConfigStore
 from browserprint.auth_utils import validate_base_url, wrap_status_message
 from browserprint.settings import DEBUG_OUTPUT_DIR

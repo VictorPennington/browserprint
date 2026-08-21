@@ -6,8 +6,8 @@ import threading
 
 from browserprint.settings import SUMATRA_PATH
 
-from .download_service import run_download_job
-from .print_executor import PrintExecutionError, run_sumatra_print
+from .downloads.service import run_download_job
+from .prints.executor import PrintExecutionError, run_sumatra_print
 
 logger = logging.getLogger("browserprint.api.job_queue")
 

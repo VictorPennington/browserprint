@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import pytest
-from browserprint.api.print_executor import (
+from browserprint.api.prints.executor import (
     PrintExecutionError,
     _parse_printer_command,
     run_sumatra_print,
@@ -33,7 +33,7 @@ def test_run_sumatra_print_builds_expected_command(monkeypatch, tmp_path) -> Non
         captured["shell"] = shell
         return DummyResult(returncode=0)
 
-    monkeypatch.setattr("browserprint.api.print_executor.subprocess.run", fake_run)
+    monkeypatch.setattr("browserprint.api.prints.executor.subprocess.run", fake_run)
 
     run_sumatra_print(fake_sumatra, '"My Printer"', fake_pdf)
 
@@ -51,7 +51,7 @@ def test_run_sumatra_print_raises_on_process_failure(monkeypatch, tmp_path) -> N
     def fake_run(command, shell, check, capture_output, text):
         return DummyResult(returncode=1, stderr="printer offline")
 
-    monkeypatch.setattr("browserprint.api.print_executor.subprocess.run", fake_run)
+    monkeypatch.setattr("browserprint.api.prints.executor.subprocess.run", fake_run)
 
     with pytest.raises(PrintExecutionError) as exc_info:
         run_sumatra_print(fake_sumatra, '"My Printer"', fake_pdf)

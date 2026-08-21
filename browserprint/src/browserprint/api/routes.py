@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter
 
-from .download_service import format_url_for_log
+from .downloads.service import format_url_for_log
 from .job_queue import DOWNLOAD_QUEUE
 from .schemas import PrintJobsRequest, PrintRequest
 

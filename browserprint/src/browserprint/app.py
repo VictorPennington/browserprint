@@ -47,10 +47,8 @@ class BrowserPrint(toga.App):
         self.print_override_panel = PrintOverridePanel()
         main_box.add(self.print_override_panel.widget)
 
-        from browserprint.api import (
-            download_service as _download_service,
-            routes as _routes,
-        )
+        from browserprint.api import routes as _routes
+        from browserprint.api.downloads import service as _download_service
 
         _routes.set_print_override_provider(self.print_override_panel.get_override)
         _download_service.set_printing_disabled_provider(

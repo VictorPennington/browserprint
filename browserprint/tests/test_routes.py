@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-from browserprint.api.pdf_fetcher import PDFDownloadError
+from browserprint.api.downloads.fetcher import PDFDownloadError
 from browserprint.api.server import create_app
 from fastapi.testclient import TestClient
 
@@ -60,9 +60,11 @@ def test_print_downloads_and_saves_pdf(monkeypatch, tmp_path: Path) -> None:
         called["url"] = url
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -95,9 +97,11 @@ def test_print_download_errors_do_not_fail_http_ack(
     def fake_fetch_pdf(url: str) -> bytes:
         raise PDFDownloadError("download failed")
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -125,9 +129,11 @@ def test_print_accepts_empty_customer_and_invoice_numbers(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -155,9 +161,11 @@ def test_print_accepts_null_customer_and_invoice_numbers(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -185,9 +193,11 @@ def test_print_accepts_integer_customer_and_invoice_numbers(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -227,9 +237,11 @@ def test_print_jobs_downloads_and_saves_all_pdfs(monkeypatch, tmp_path: Path) ->
         called_urls.append(url)
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print/jobs",
@@ -273,9 +285,11 @@ def test_print_jobs_accepts_null_customer_and_invoice_numbers(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print/jobs",
@@ -307,9 +321,11 @@ def test_print_jobs_accepts_integer_customer_and_invoice_numbers(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print/jobs",
@@ -336,13 +352,15 @@ def test_print_jobs_accepts_integer_customer_and_invoice_numbers(
 def test_resolve_output_path_appends_counter_when_name_already_exists(
     monkeypatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     first_path = tmp_path / "2025_12_01_1235_123_456_invoice.pdf"
     first_path.write_bytes(b"existing")
 
-    from browserprint.api.download_service import resolve_output_path
+    from browserprint.api.downloads.service import resolve_output_path
 
     resolved = resolve_output_path("http://localhost:8000/test/invoice", "123", "456")
 
@@ -362,12 +380,14 @@ def test_successful_download_triggers_sumatra_print(
     def fake_run_sumatra_print(sumatra_path, printer_command, output_path) -> None:
         print_calls.append((sumatra_path, printer_command, output_path))
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
         "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
     )
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -404,12 +424,14 @@ def test_download_failure_does_not_trigger_sumatra_print(
     def fake_run_sumatra_print(sumatra_path, printer_command, output_path) -> None:
         print_calls.append((sumatra_path, printer_command, output_path))
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
         "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
     )
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -438,17 +460,19 @@ def test_print_execution_error_is_caught_and_does_not_crash_worker(
     def fake_fetch_pdf(url: str) -> bytes:
         return b"%PDF-fake-content"
 
-    from browserprint.api.print_executor import PrintExecutionError
+    from browserprint.api.prints.executor import PrintExecutionError
 
     def fake_run_sumatra_print(sumatra_path, printer_command, output_path) -> None:
         raise PrintExecutionError("printer offline")
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
         "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
     )
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
 
     response = client.post(
         "/print",
@@ -493,12 +517,14 @@ def test_print_override_replaces_print_command(monkeypatch, tmp_path: Path) -> N
     def fake_run_sumatra_print(sumatra_path, printer_command, output_path) -> None:
         print_calls.append((printer_command, output_path))
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
         "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
     )
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
     monkeypatch.setattr(
         "browserprint.api.routes._get_print_override", lambda: "Override Printer"
     )
@@ -536,12 +562,14 @@ def test_print_override_inactive_uses_original_command(
     def fake_run_sumatra_print(sumatra_path, printer_command, output_path) -> None:
         print_calls.append((printer_command, output_path))
 
-    monkeypatch.setattr("browserprint.api.download_service.fetch_pdf", fake_fetch_pdf)
+    monkeypatch.setattr("browserprint.api.downloads.service.fetch_pdf", fake_fetch_pdf)
     monkeypatch.setattr(
         "browserprint.api.job_queue.run_sumatra_print", fake_run_sumatra_print
     )
-    monkeypatch.setattr("browserprint.api.download_service._DEBUG_OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr("browserprint.api.download_service.datetime", FrozenDateTime)
+    monkeypatch.setattr(
+        "browserprint.api.downloads.service._DEBUG_OUTPUT_DIR", tmp_path
+    )
+    monkeypatch.setattr("browserprint.api.downloads.service.datetime", FrozenDateTime)
     monkeypatch.setattr("browserprint.api.routes._get_print_override", lambda: None)
 
     response = client.post(

@@ -1,6 +1,6 @@
 import pytest
 import requests
-from browserprint.api.pdf_fetcher import PDFDownloadError, fetch_pdf
+from browserprint.api.downloads.fetcher import PDFDownloadError, fetch_pdf
 
 
 class DummyResponse:
@@ -13,7 +13,7 @@ class DummyResponse:
 def test_fetch_pdf_requires_bearer_token(monkeypatch) -> None:
     monkeypatch.delenv("BROWSERPRINT_LARAVEL_TOKEN", raising=False)
     monkeypatch.setattr(
-        "browserprint.api.pdf_fetcher._AUTH_STORE.get_token",
+        "browserprint.api.downloads.fetcher._AUTH_STORE.get_token",
         lambda: None,
     )
 
@@ -26,7 +26,7 @@ def test_fetch_pdf_requires_bearer_token(monkeypatch) -> None:
 def test_fetch_pdf_uses_bearer_token_header(monkeypatch) -> None:
     monkeypatch.setenv("BROWSERPRINT_LARAVEL_TOKEN", "abc123")
     monkeypatch.setattr(
-        "browserprint.api.pdf_fetcher._AUTH_STORE.get_token",
+        "browserprint.api.downloads.fetcher._AUTH_STORE.get_token",
         lambda: None,
     )
 
@@ -42,7 +42,7 @@ def test_fetch_pdf_uses_bearer_token_header(monkeypatch) -> None:
             content=b"%PDF-fake",
         )
 
-    monkeypatch.setattr("browserprint.api.pdf_fetcher.requests.get", fake_get)
+    monkeypatch.setattr("browserprint.api.downloads.fetcher.requests.get", fake_get)
 
     payload = fetch_pdf("http://localhost:8000/doc.pdf")
 
@@ -54,7 +54,7 @@ def test_fetch_pdf_uses_bearer_token_header(monkeypatch) -> None:
 def test_fetch_pdf_rejects_non_pdf(monkeypatch) -> None:
     monkeypatch.setenv("BROWSERPRINT_LARAVEL_TOKEN", "abc123")
     monkeypatch.setattr(
-        "browserprint.api.pdf_fetcher._AUTH_STORE.get_token",
+        "browserprint.api.downloads.fetcher._AUTH_STORE.get_token",
         lambda: None,
     )
 
@@ -65,7 +65,7 @@ def test_fetch_pdf_rejects_non_pdf(monkeypatch) -> None:
             content=b'{"ok":true}',
         )
 
-    monkeypatch.setattr("browserprint.api.pdf_fetcher.requests.get", fake_get)
+    monkeypatch.setattr("browserprint.api.downloads.fetcher.requests.get", fake_get)
 
     with pytest.raises(PDFDownloadError) as exc_info:
         fetch_pdf("http://localhost:8000/doc.pdf")
@@ -86,7 +86,7 @@ def test_fetch_pdf_accepts_explicit_token_without_env(monkeypatch) -> None:
             content=b"%PDF-fake",
         )
 
-    monkeypatch.setattr("browserprint.api.pdf_fetcher.requests.get", fake_get)
+    monkeypatch.setattr("browserprint.api.downloads.fetcher.requests.get", fake_get)
 
     payload = fetch_pdf("http://localhost:8000/doc.pdf", token="ui-token")
 
@@ -97,14 +97,14 @@ def test_fetch_pdf_accepts_explicit_token_without_env(monkeypatch) -> None:
 def test_fetch_pdf_handles_request_exception(monkeypatch) -> None:
     monkeypatch.setenv("BROWSERPRINT_LARAVEL_TOKEN", "abc123")
     monkeypatch.setattr(
-        "browserprint.api.pdf_fetcher._AUTH_STORE.get_token",
+        "browserprint.api.downloads.fetcher._AUTH_STORE.get_token",
         lambda: None,
     )
 
     def fake_get(url: str, headers: dict[str, str], timeout: int):
         raise requests.Timeout("timed out")
 
-    monkeypatch.setattr("browserprint.api.pdf_fetcher.requests.get", fake_get)
+    monkeypatch.setattr("browserprint.api.downloads.fetcher.requests.get", fake_get)
 
     with pytest.raises(PDFDownloadError) as exc_info:
         fetch_pdf("http://localhost:8000/doc.pdf")
@@ -115,7 +115,7 @@ def test_fetch_pdf_handles_request_exception(monkeypatch) -> None:
 def test_fetch_pdf_prefers_stored_token_for_authorization_header(monkeypatch) -> None:
     monkeypatch.setenv("BROWSERPRINT_LARAVEL_TOKEN", "env-token")
     monkeypatch.setattr(
-        "browserprint.api.pdf_fetcher._AUTH_STORE.get_token",
+        "browserprint.api.downloads.fetcher._AUTH_STORE.get_token",
         lambda: "stored-token",
     )
 
@@ -129,7 +129,7 @@ def test_fetch_pdf_prefers_stored_token_for_authorization_header(monkeypatch) ->
             content=b"%PDF-fake",
         )
 
-    monkeypatch.setattr("browserprint.api.pdf_fetcher.requests.get", fake_get)
+    monkeypatch.setattr("browserprint.api.downloads.fetcher.requests.get", fake_get)
 
     payload = fetch_pdf("http://localhost:8000/doc.pdf")
 

@@ -7,9 +7,9 @@ from urllib.parse import urlparse
 
 from browserprint.settings import DEBUG_OUTPUT_DIR
 
-from .pdf_fetcher import PDFDownloadError, fetch_pdf
+from .fetcher import PDFDownloadError, fetch_pdf
 
-logger = logging.getLogger("browserprint.api.download_service")
+logger = logging.getLogger("browserprint.api.downloads.service")
 
 _DEBUG_OUTPUT_DIR = DEBUG_OUTPUT_DIR
 

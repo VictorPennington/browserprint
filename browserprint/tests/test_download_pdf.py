@@ -1,7 +1,7 @@
 from pathlib import Path
 from types import SimpleNamespace
 
-from browserprint.api.pdf_fetcher import PDFDownloadError
+from browserprint.api.downloads.fetcher import PDFDownloadError
 from browserprint.auth_config import AuthConfig
 from browserprint.ui.download_pdf import DownloadPdfController
 
